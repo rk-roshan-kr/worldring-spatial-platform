@@ -1,0 +1,17 @@
+{
+  "name": "worldring-spatial-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "dev:backend": "npm run start:dev --prefix backend",
+    "dev:all": "concurrently -k -p \"[{name}]\" -n \"FRONTEND,BACKEND\" -c \"cyan.bold,magenta.bold\" \"npm run dev --prefix frontend\" \"npm run start:dev --prefix backend\"",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "build": "npm run build:frontend && npm run build:backend",
+    "start:backend": "npm run start --prefix backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}
