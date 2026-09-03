@@ -223,8 +223,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       // ── STAGE 2 (1200ms - 2400ms): Official Undivided Sovereign Boundary of India ─
       const STAGE_2_DELAY = 1200;
 
-      // Pure Clockwise Simple Polygon — Sweeping Majestic Dome Crown for J&K & Ladakh
-      // Zero self-intersections, zero loops, zero twists at the neck!
+      // Pure Clockwise Simple Polygon with Complete High-Detail Northeast India (Seven Sisters & Sikkim)
+      // Zero self-intersections, zero loops!
       const sovereignIndiaBoundary = [
         { lon: 68.5, lat: 23.7 }, // Kutch, Gujarat
         { lon: 69.8, lat: 22.5 }, // Kathiawar West
@@ -239,11 +239,19 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 82.2, lat: 16.8 }, // Visakhapatnam / AP
         { lon: 85.0, lat: 19.5 }, // Odisha Coast
         { lon: 88.0, lat: 21.8 }, // Sundarbans / Bengal
-        { lon: 91.8, lat: 23.0 }, // Tripura / NE Arc
-        { lon: 93.5, lat: 25.5 }, // Manipur / Nagaland
-        { lon: 96.0, lat: 28.0 }, // Arunachal East Tip (Kibithu)
-        { lon: 92.0, lat: 27.8 }, // Bhutan / Arunachal Border
-        { lon: 88.6, lat: 27.5 }, // Sikkim / Kanchenjunga
+        // ── COMPLETE HIGH-DETAIL NORTHEAST INDIA (SEVEN SISTERS & SIKKIM) ──
+        { lon: 91.5, lat: 23.5 }, // Tripura Peninsula (Agartala)
+        { lon: 93.0, lat: 22.0 }, // Mizoram Tip (Lushai Hills)
+        { lon: 94.2, lat: 24.5 }, // Manipur / Imphal Valley
+        { lon: 95.2, lat: 26.0 }, // Nagaland / Kohima
+        { lon: 96.8, lat: 27.2 }, // Assam East / Tinsukia
+        { lon: 97.2, lat: 28.0 }, // Arunachal Pradesh Far East Tip (Dong / Kibithu)
+        { lon: 96.0, lat: 28.6 }, // Dibang Valley / Upper Arunachal
+        { lon: 94.0, lat: 28.5 }, // Siang / Subansiri Arc
+        { lon: 92.0, lat: 27.8 }, // Tawang / West Kameng
+        { lon: 88.9, lat: 27.8 }, // Sikkim East / Nathu La
+        { lon: 88.6, lat: 28.2 }, // Sikkim North Tip (Kanchenjunga)
+        { lon: 88.2, lat: 26.5 }, // Siliguri Corridor (Chicken's Neck)
         { lon: 85.0, lat: 27.8 }, // Nepal Border
         { lon: 80.5, lat: 30.0 }, // Uttarakhand (Garhwal)
         // ── MAJESTIC UNDIVIDED CROWN OF JAMMU, KASHMIR & LADAKH ──
@@ -259,33 +267,44 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 74.5, lat: 31.8 }, // Punjab / Wagah Border
         { lon: 71.5, lat: 29.5 }, // Thar Desert North
         { lon: 70.0, lat: 26.8 }, // Barmer / Rajasthan
-        { lon: 68.5, lat: 23.7 }, // Back to Kutch (Smooth Unbroken Loop)
+        { lon: 68.5, lat: 23.7 }, // Back to Kutch (Clean Unbroken Loop)
       ];
 
-      // Layered thread strands following the clean non-intersecting outer boundary of India
+      // Layered thread strands following the complete border of India including Northeast
       for (let offset = -0.6; offset <= 0.6; offset += 0.3) {
         const path = sovereignIndiaBoundary.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.25 }));
-        addGeoThreadPath(path, STAGE_2_DELAY, 0.88, 1.45, 48);
+        addGeoThreadPath(path, STAGE_2_DELAY, 0.88, 1.45, 52);
       }
 
-      // Natural Rivers inside India (No political internal lines)
+      // Dedicated Northeast Highlight Threads (Assam Valley & Meghalaya Plateau)
+      const northeastAssamSpine = [
+        { lon: 89.8, lat: 26.0 }, { lon: 91.8, lat: 26.2 }, { lon: 93.8, lat: 26.8 }, { lon: 95.5, lat: 27.5 },
+      ];
+      addGeoThreadPath(northeastAssamSpine, STAGE_2_DELAY + 200, 0.82, 1.25, 26);
+
+      const meghalayaPlateau = [
+        { lon: 89.8, lat: 25.5 }, { lon: 91.8, lat: 25.2 }, { lon: 92.8, lat: 25.4 },
+      ];
+      addGeoThreadPath(meghalayaPlateau, STAGE_2_DELAY + 350, 0.78, 1.15, 20);
+
+      // Natural Rivers inside India
       addGeoThreadPath([
         { lon: 79.0, lat: 31.0 }, { lon: 78.1, lat: 30.0 }, { lon: 79.5, lat: 28.5 },
         { lon: 81.8, lat: 25.4 }, { lon: 85.1, lat: 25.6 }, { lon: 88.0, lat: 24.5 },
         { lon: 89.5, lat: 23.0 }, { lon: 88.3, lat: 21.8 },
-      ], STAGE_2_DELAY + 300, 0.65, 1.0, 24); // Ganga
+      ], STAGE_2_DELAY + 450, 0.65, 1.0, 24); // Ganga
 
       addGeoThreadPath([
         { lon: 82.0, lat: 30.6 }, { lon: 87.0, lat: 29.2 }, { lon: 95.0, lat: 28.2 },
         { lon: 95.5, lat: 27.5 }, { lon: 91.5, lat: 26.2 }, { lon: 89.8, lat: 25.2 },
-      ], STAGE_2_DELAY + 450, 0.65, 1.0, 24); // Brahmaputra
+      ], STAGE_2_DELAY + 550, 0.75, 1.15, 28); // Brahmaputra Valley
 
       addGeoThreadPath([
         { lon: 81.0, lat: 31.0 }, { lon: 78.5, lat: 33.8 }, { lon: 76.0, lat: 34.5 },
         { lon: 74.0, lat: 35.5 }, { lon: 71.5, lat: 33.0 }, { lon: 70.0, lat: 28.0 }, { lon: 68.0, lat: 24.0 },
-      ], STAGE_2_DELAY + 600, 0.65, 1.0, 24); // Indus
+      ], STAGE_2_DELAY + 650, 0.65, 1.0, 24); // Indus
 
-      // Himalayas Crest (Sweeps gracefully across Nepal & Northern border without crossing J&K neck)
+      // Himalayas Crest
       const himalayasCrest = [
         { lon: 75.0, lat: 34.5 }, { lon: 80.5, lat: 30.2 }, { lon: 88.5, lat: 27.6 }, { lon: 95.0, lat: 28.5 },
       ];
@@ -647,7 +666,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="2D red thread map of Earth with sweeping dome crown for Sovereign India (Jammu, Kashmir & Ladakh complete, zero neck self-intersections) — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into rock-solid world coastlines. Click and hold to grab and pull threads apart"
+      aria-label="2D red thread map of Earth with complete Northeast India (Seven Sisters & Sikkim) and sweeping undivided dome crown for J&K and Ladakh — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into rock-solid world coastlines. Click and hold to grab and pull threads apart"
       role="img"
     />
   );
