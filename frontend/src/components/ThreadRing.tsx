@@ -8,15 +8,15 @@ const N_SEGS      = 24;        // control points per thread for smooth curves
 const ARC_SPAN    = Math.PI * 2.2; // long threads wrapping 400° around circle
 const RING_FRAC   = 0.35;      // ring radius fraction
 
-// Gentle Physics (prevents any fast or crazy whipping)
-const K_HOME      = 0.05;      // gentle home spring force
-const K_LINK      = 0.12;      // gentle neighbor link spring
+// Gentle Physics
+const K_HOME      = 0.05;      // home spring force
+const K_LINK      = 0.12;      // neighbor link spring force
 const DAMPING     = 0.84;      // smooth damping
-const MAX_SPEED   = 10;        // hard speed cap (px/frame) to prevent any wild motion
+const MAX_SPEED   = 10;        // hard speed cap (px/frame) to prevent whipping
 
-// Drag & Hook
-const HOOK_RADIUS = 45;        // radius to grab threads with cursor (px)
-const MAX_HOOKS   = 12;        // max threads grabbed simultaneously
+// Drag & Grab (Click and Hold Only)
+const HOOK_RADIUS = 50;        // grab radius around cursor (px)
+const MAX_HOOKS   = 14;        // max threads grabbed simultaneously
 
 // Color: Terracotta Red matching favicon (#bf4722)
 const ACC_R = 191, ACC_G = 71, ACC_B = 34;
@@ -28,8 +28,8 @@ interface Pt {
   vy: number;
   hx: number; // Home X on ring
   hy: number; // Home Y on ring
-  sx: number; // Initial gentle start X
-  sy: number; // Initial gentle start Y
+  sx: number; // Initial start X
+  sy: number; // Initial start Y
 }
 
 interface Thread {
@@ -73,11 +73,11 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           const t = s / (N_SEGS - 1);
           const angle = baseAngle + (t - 0.5) * ARC_SPAN;
 
-          // Target home position on the red ring
+          // Target home position on red ring
           const hx = cx + threadRadius * Math.cos(angle);
           const hy = cy + threadRadius * Math.sin(angle);
 
-          // Gentle initial position near the ring (no far-away crazy lines)
+          // Initial position near ring
           const offsetDist = 15 + Math.random() * 25;
           const offsetAngle = baseAngle + (t - 0.5) * 0.5;
           const sx = hx + Math.cos(offsetAngle) * offsetDist;
@@ -126,8 +126,10 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       build();
     };
 
+    // Update thread grab state — ONLY grab when user is actively clicking and holding (isPointerDown)
     const updateHooks = () => {
-      if (mx < -500 || my < -500) {
+      if (!isPointerDown || mx < -500 || my < -500) {
+        // Release all grabbed threads if not holding mouse down
         for (const th of threads) th.isHooked = false;
         return;
       }
@@ -153,14 +155,13 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           }
         }
 
-        if ((isPointerDown && minDist < HOOK_RADIUS * 1.5) || minDist < HOOK_RADIUS) {
+        // Only grab threads near cursor while mouse button is held down
+        if (minDist < HOOK_RADIUS) {
           if (!th.isHooked && activeHookCount < MAX_HOOKS) {
             th.isHooked = true;
             th.hookPtIdx = nearestPtIdx;
             activeHookCount++;
           }
-        } else if (!isPointerDown && minDist > HOOK_RADIUS * 2.5) {
-          th.isHooked = false;
         }
       }
     };
@@ -177,7 +178,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         const localTime = elapsed - th.delay;
         if (localTime < 0) continue;
 
-        // Intro progress (0 -> 1) with smooth cubic ease
         const rawProgress = Math.min(localTime / 1600, 1);
         const easeIntro = 1 - Math.pow(1 - rawProgress, 3);
 
@@ -187,7 +187,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         for (let s = 0; s < N; s++) {
           const p = th.pts[s];
 
-          if (th.isHooked && s === th.hookPtIdx && mx > -500) {
+          if (th.isHooked && s === th.hookPtIdx && isPointerDown && mx > -500) {
+            // Pin grabbed particle directly to cursor position while holding click
             p.x = mx;
             p.y = my;
             p.vx = 0;
@@ -198,7 +199,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
             const targetY = p.hy + Math.sin(angle) * breath;
 
             if (rawProgress < 1.0) {
-              // Direct smooth lerp during intro (prevents any fast physics whipping)
               const curTargetX = p.sx + (targetX - p.sx) * easeIntro;
               const curTargetY = p.sy + (targetY - p.sy) * easeIntro;
               p.x += (curTargetX - p.x) * 0.15;
@@ -206,7 +206,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
               p.vx = 0;
               p.vy = 0;
             } else {
-              // Post-intro gentle physics
               p.vx += (targetX - p.x) * K_HOME;
               p.vy += (targetY - p.y) * K_HOME;
 
@@ -221,7 +220,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
                 p.vy += (next.y - p.y) * K_LINK;
               }
 
-              // Speed cap
               const speedSq = p.vx * p.vx + p.vy * p.vy;
               if (speedSq > MAX_SPEED * MAX_SPEED) {
                 const spd = Math.sqrt(speedSq);
@@ -239,7 +237,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
         const opacity = th.alpha * Math.min(rawProgress * 1.5, 1);
         ctx.strokeStyle = `rgba(${ACC_R},${ACC_G},${ACC_B},${opacity.toFixed(3)})`;
-        ctx.lineWidth = th.isHooked ? th.lw * 1.5 : th.lw;
+        ctx.lineWidth = th.isHooked ? th.lw * 1.6 : th.lw;
         ctx.lineCap = "round";
 
         ctx.beginPath();
@@ -306,7 +304,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Interactive red thread circle — click or hover to pull threads apart"
+      aria-label="Interactive red thread circle — click and hold to grab and pull threads apart"
       role="img"
     />
   );
