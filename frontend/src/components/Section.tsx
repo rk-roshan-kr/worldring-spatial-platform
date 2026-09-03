@@ -18,7 +18,7 @@ export function Section({
   return (
     <section
       id={id}
-      className={`border-t border-line py-12 md:py-20 lg:py-10 ${className}`}
+      className={`w-full ${className}`}
     >
       <div className="mx-auto max-w-[76rem] px-(--gutter)">
         <Reveal className="mb-8 md:mb-12 lg:mb-8">
