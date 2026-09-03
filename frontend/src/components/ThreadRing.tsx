@@ -3,19 +3,20 @@
 import { useEffect, useRef } from "react";
 
 // ─── Design Tokens & Physics Config ──────────────────────────────────────────
-const N_THREADS   = 100;       // number of super long threads forming the ring
-const N_SEGS      = 36;        // 36 control particles per thread
-const ARC_SPAN    = Math.PI * 3.8; // super long threads wrapping 684°
-const RING_FRAC   = 0.36;      // radius as fraction of min(W, H)
+const N_THREADS   = 90;        // number of long threads forming the ring
+const N_SEGS      = 24;        // control points per thread for smooth curves
+const ARC_SPAN    = Math.PI * 2.2; // long threads wrapping 400° around circle
+const RING_FRAC   = 0.35;      // ring radius fraction
 
-// Physics Constants
-const K_HOME      = 0.09;      // spring force pulling particles back to ring home
-const K_LINK      = 0.42;      // strong link spring along the super long fiber
-const DAMPING     = 0.75;      // velocity damping per frame
+// Gentle Physics (prevents any fast or crazy whipping)
+const K_HOME      = 0.05;      // gentle home spring force
+const K_LINK      = 0.12;      // gentle neighbor link spring
+const DAMPING     = 0.84;      // smooth damping
+const MAX_SPEED   = 10;        // hard speed cap (px/frame) to prevent any wild motion
 
-// Drag & Hook Physics
-const HOOK_RADIUS = 55;        // radius to snag/hook threads with cursor (px)
-const MAX_HOOKS   = 16;        // max threads hooked simultaneously
+// Drag & Hook
+const HOOK_RADIUS = 45;        // radius to grab threads with cursor (px)
+const MAX_HOOKS   = 12;        // max threads grabbed simultaneously
 
 // Color: Terracotta Red matching favicon (#bf4722)
 const ACC_R = 191, ACC_G = 71, ACC_B = 34;
@@ -25,10 +26,10 @@ interface Pt {
   y: number;
   vx: number;
   vy: number;
-  hx: number; // Target home X on ring
-  hy: number; // Target home Y on ring
-  sx: number; // Non-radial start X (parallel lines)
-  sy: number; // Non-radial start Y (parallel lines)
+  hx: number; // Home X on ring
+  hy: number; // Home Y on ring
+  sx: number; // Initial gentle start X
+  sy: number; // Initial gentle start Y
 }
 
 interface Thread {
@@ -64,25 +65,23 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
       for (let i = 0; i < N_THREADS; i++) {
         const baseAngle = (i / N_THREADS) * Math.PI * 2;
-        const rOffset = (Math.random() - 0.5) * 18;
+        const rOffset = (Math.random() - 0.5) * 14;
         const threadRadius = R + rOffset;
-
-        // NON-RADIAL START: Long straight parallel lines spanning horizontally across the canvas
-        // Each thread starts as a straight line at Y position distributed vertically
-        const startY = cy + (i / N_THREADS - 0.5) * H * 1.4;
 
         const pts: Pt[] = [];
         for (let s = 0; s < N_SEGS; s++) {
           const t = s / (N_SEGS - 1);
           const angle = baseAngle + (t - 0.5) * ARC_SPAN;
 
-          // Target home position on the ring
+          // Target home position on the red ring
           const hx = cx + threadRadius * Math.cos(angle);
           const hy = cy + threadRadius * Math.sin(angle);
 
-          // Non-radial start position: straight horizontal line passing across canvas
-          const sx = cx + (t - 0.5) * W * 1.6;
-          const sy = startY + (Math.random() - 0.5) * 10;
+          // Gentle initial position near the ring (no far-away crazy lines)
+          const offsetDist = 15 + Math.random() * 25;
+          const offsetAngle = baseAngle + (t - 0.5) * 0.5;
+          const sx = hx + Math.cos(offsetAngle) * offsetDist;
+          const sy = hy + Math.sin(offsetAngle) * offsetDist;
 
           pts.push({
             x: sx,
@@ -98,9 +97,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
         threads.push({
           pts,
-          delay: (i / N_THREADS) * 800,
-          lw: 0.5 + Math.random() * 1.1,
-          alpha: 0.35 + Math.random() * 0.45,
+          delay: (i / N_THREADS) * 600,
+          lw: 0.6 + Math.random() * 0.9,
+          alpha: 0.38 + Math.random() * 0.42,
           phase: Math.random() * Math.PI * 2,
           isHooked: false,
           hookPtIdx: Math.floor(N_SEGS / 2),
@@ -154,13 +153,13 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           }
         }
 
-        if ((isPointerDown && minDist < HOOK_RADIUS * 1.6) || minDist < HOOK_RADIUS) {
+        if ((isPointerDown && minDist < HOOK_RADIUS * 1.5) || minDist < HOOK_RADIUS) {
           if (!th.isHooked && activeHookCount < MAX_HOOKS) {
             th.isHooked = true;
             th.hookPtIdx = nearestPtIdx;
             activeHookCount++;
           }
-        } else if (!isPointerDown && minDist > HOOK_RADIUS * 2.8) {
+        } else if (!isPointerDown && minDist > HOOK_RADIUS * 2.5) {
           th.isHooked = false;
         }
       }
@@ -178,10 +177,11 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         const localTime = elapsed - th.delay;
         if (localTime < 0) continue;
 
-        const rawProgress = Math.min(localTime / 1400, 1);
+        // Intro progress (0 -> 1) with smooth cubic ease
+        const rawProgress = Math.min(localTime / 1600, 1);
         const easeIntro = 1 - Math.pow(1 - rawProgress, 3);
 
-        const breath = Math.sin(now * 0.001 + th.phase) * 1.5 * easeIntro;
+        const breath = Math.sin(now * 0.0008 + th.phase) * 1.2 * easeIntro;
         const N = th.pts.length;
 
         for (let s = 0; s < N; s++) {
@@ -197,28 +197,43 @@ export function ThreadRing({ className = "" }: { className?: string }) {
             const targetX = p.hx + Math.cos(angle) * breath;
             const targetY = p.hy + Math.sin(angle) * breath;
 
-            // Lerp target from parallel start line to ring target
-            const currentTargetX = p.sx + (targetX - p.sx) * easeIntro;
-            const currentTargetY = p.sy + (targetY - p.sy) * easeIntro;
+            if (rawProgress < 1.0) {
+              // Direct smooth lerp during intro (prevents any fast physics whipping)
+              const curTargetX = p.sx + (targetX - p.sx) * easeIntro;
+              const curTargetY = p.sy + (targetY - p.sy) * easeIntro;
+              p.x += (curTargetX - p.x) * 0.15;
+              p.y += (curTargetY - p.y) * 0.15;
+              p.vx = 0;
+              p.vy = 0;
+            } else {
+              // Post-intro gentle physics
+              p.vx += (targetX - p.x) * K_HOME;
+              p.vy += (targetY - p.y) * K_HOME;
 
-            p.vx += (currentTargetX - p.x) * K_HOME;
-            p.vy += (currentTargetY - p.y) * K_HOME;
+              if (s > 0) {
+                const prev = th.pts[s - 1];
+                p.vx += (prev.x - p.x) * K_LINK;
+                p.vy += (prev.y - p.y) * K_LINK;
+              }
+              if (s < N - 1) {
+                const next = th.pts[s + 1];
+                p.vx += (next.x - p.x) * K_LINK;
+                p.vy += (next.y - p.y) * K_LINK;
+              }
 
-            if (s > 0) {
-              const prev = th.pts[s - 1];
-              p.vx += (prev.x - p.x) * K_LINK;
-              p.vy += (prev.y - p.y) * K_LINK;
+              // Speed cap
+              const speedSq = p.vx * p.vx + p.vy * p.vy;
+              if (speedSq > MAX_SPEED * MAX_SPEED) {
+                const spd = Math.sqrt(speedSq);
+                p.vx = (p.vx / spd) * MAX_SPEED;
+                p.vy = (p.vy / spd) * MAX_SPEED;
+              }
+
+              p.vx *= DAMPING;
+              p.vy *= DAMPING;
+              p.x += p.vx;
+              p.y += p.vy;
             }
-            if (s < N - 1) {
-              const next = th.pts[s + 1];
-              p.vx += (next.x - p.x) * K_LINK;
-              p.vy += (next.y - p.y) * K_LINK;
-            }
-
-            p.vx *= DAMPING;
-            p.vy *= DAMPING;
-            p.x += p.vx;
-            p.y += p.vy;
           }
         }
 
@@ -291,7 +306,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Interactive red thread circle formed from non-radial parallel threads"
+      aria-label="Interactive red thread circle — click or hover to pull threads apart"
       role="img"
     />
   );
