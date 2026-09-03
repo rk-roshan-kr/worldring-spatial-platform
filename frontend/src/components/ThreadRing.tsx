@@ -2,38 +2,29 @@
 
 import { useEffect, useRef } from "react";
 
-// ─── Tension-Driven Rope Network Configuration ────────────────────────────────
-const RING_FRAC   = 0.38;      // circle radius fraction
+// ─── Config ───────────────────────────────────────────────────────────────────
+const RING_FRAC   = 0.38;      // ring radius fraction of min(W, H)
 
-// Physical Tension Constants
-const ROPE_TENSION  = 0.18;    // internal rope tension along string
-const CROSS_TENSION = 0.08;    // cross-link tension between intersecting ropes
-const ANCHOR_STIFF  = 0.12;    // perimeter anchor tension pulling circle round
-const DAMPING       = 0.88;    // smooth physical damping
-const MAX_SPEED     = 10;      // max velocity (px/frame)
+// Drag & Grab
+const HOOK_RADIUS = 40;        // grab radius around cursor (px)
+const MAX_HOOKS   = 16;        // max threads grabbed simultaneously
+const BREAK_DIST  = 160;       // max stretch before thread snaps
+const REPAIR_MS   = 1200;      // ms to re-knit snapped thread
 
-// Mouse Drag & Snapping
-const HOOK_RADIUS   = 40;      // cursor grab radius (px)
-const MAX_HOOKS     = 16;      // max threads pulled simultaneously
-const BREAK_DIST    = 160;     // max rope stretch before tension snaps rope
-const REPAIR_MS     = 1200;    // ms to re-knit snapped rope
+// Staged Intro Convergence Duration per thread (ms)
+const CONVERGE_MS = 2400;
 
-// Intro Animation
-const CONVERGE_MS   = 2800;    // time for straight ropes to enter & pull into tension equilibrium
-
-// Terracotta Red matching favicon (#bf4722)
+// Terracotta Red color matching favicon (#bf4722)
 const ACC_R = 191, ACC_G = 71, ACC_B = 34;
 
 interface Pt {
   x: number;
   y: number;
-  vx: number;
-  vy: number;
-  hx: number; // Target equilibrium position on map/circle
-  hy: number;
-  sx: number; // Straight offscreen origin
-  sy: number;
-  tRatio: number;
+  hx: number; // Target home X on 2D India Earth map
+  hy: number; // Target home Y on 2D India Earth map
+  sx: number; // Offscreen start X (perfect straight line)
+  sy: number; // Offscreen start Y (perfect straight line)
+  tRatio: number; // Position ratio along thread [0, 1]
   lineAngle: number;
   lineLength: number;
 }
@@ -43,12 +34,12 @@ interface Thread {
   delay: number;
   lw: number;
   alpha: number;
-  phase: number;
   isHooked: boolean;
   hookPtIdx: number;
   isBroken: boolean;
   breakTime: number;
-  crossLinks: { targetThreadIdx: number; ptIdx: number; targetPtIdx: number }[];
+  dragReleaseTime: number; // time when thread was released from drag
+  releasePt: { x: number; y: number } | null;
 }
 
 export function ThreadRing({ className = "" }: { className?: string }) {
@@ -114,7 +105,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         const pts: Pt[] = [];
         const totalSegments = projPts.length - 1;
 
-        // Straight offscreen start position coming in from edge angle
+        // Straight line offscreen start position coming in from edge angle
         const flyAngle = Math.random() * Math.PI * 2;
         const flyDist = Math.max(W, H) * (0.85 + Math.random() * 0.4);
         const startX = cx + Math.cos(flyAngle) * flyDist;
@@ -140,8 +131,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           pts.push({
             x: sx,
             y: sy,
-            vx: 0,
-            vy: 0,
             hx,
             hy,
             sx,
@@ -157,17 +146,16 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           delay: stageDelayMs + Math.random() * 250,
           lw: lw + (Math.random() - 0.5) * 0.2,
           alpha: alpha + (Math.random() - 0.5) * 0.1,
-          phase: Math.random() * Math.PI * 2,
           isHooked: false,
           hookPtIdx: Math.floor(subdivide / 2),
           isBroken: false,
           breakTime: 0,
-          crossLinks: [],
+          dragReleaseTime: 0,
+          releasePt: null,
         });
       };
 
-      // ── STAGE 1 (0ms - 1000ms): Outer Emblem Circle Ropes ──────────────────
-      // These outer ropes connect to each other under tension to form the circle ring!
+      // ── STAGE 1 (0ms - 1000ms): Outer Emblem Circle Frame ──────────────────
       const STAGE_1_DELAY = 0;
       const N_OUTER = 50;
       for (let i = 0; i < N_OUTER; i++) {
@@ -197,8 +185,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           pts.push({
             x: sx,
             y: sy,
-            vx: 0,
-            vy: 0,
             hx,
             hy,
             sx,
@@ -214,16 +200,16 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           delay: STAGE_1_DELAY + (i / N_OUTER) * 900,
           lw: 0.8 + Math.random() * 0.7,
           alpha: 0.45 + Math.random() * 0.35,
-          phase: Math.random() * Math.PI * 2,
           isHooked: false,
           hookPtIdx: Math.floor(segs / 2),
           isBroken: false,
           breakTime: 0,
-          crossLinks: [],
+          dragReleaseTime: 0,
+          releasePt: null,
         });
       }
 
-      // ── STAGE 2 (1200ms - 2400ms): India & Himalayas Ropes ────────────────
+      // ── STAGE 2 (1200ms - 2400ms): Indian Subcontinent, Rivers & Himalayas ─
       const STAGE_2_DELAY = 1200;
 
       const indiaCoast = [
@@ -370,24 +356,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ];
       addGeoThreadPath(chinaCoast, STAGE_4_DELAY + 1150, 0.52, 0.85, 22);
 
-      // Build cross-rope tension links where threads cross or touch each other
-      for (let i = 0; i < threads.length; i++) {
-        const th1 = threads[i];
-        for (let j = i + 1; j < threads.length; j++) {
-          const th2 = threads[j];
-          for (let s1 = 0; s1 < th1.pts.length; s1 += 4) {
-            for (let s2 = 0; s2 < th2.pts.length; s2 += 4) {
-              const p1 = th1.pts[s1];
-              const p2 = th2.pts[s2];
-              const dist = Math.hypot(p1.hx - p2.hx, p1.hy - p2.hy);
-              if (dist < 18) {
-                th1.crossLinks.push({ targetThreadIdx: j, ptIdx: s1, targetPtIdx: s2 });
-              }
-            }
-          }
-        }
-      }
-
       t0 = performance.now();
     };
 
@@ -410,7 +378,13 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
     const updateHooks = (now: number) => {
       if (!isPointerDown || mx < -500 || my < -500) {
-        for (const th of threads) th.isHooked = false;
+        for (const th of threads) {
+          if (th.isHooked) {
+            th.isHooked = false;
+            th.dragReleaseTime = now;
+            th.releasePt = { x: th.pts[th.hookPtIdx].x, y: th.pts[th.hookPtIdx].y };
+          }
+        }
         return;
       }
 
@@ -471,7 +445,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           bendFactor = 1 - Math.pow(1 - bendProgress, 3);
         }
 
-        const breath = Math.sin(now * 0.0008 + th.phase) * 1.2 * easeIntro;
         const N = th.pts.length;
 
         // Snapping check when pulled too far
@@ -483,85 +456,54 @@ export function ThreadRing({ className = "" }: { className?: string }) {
             th.isHooked = false;
             th.isBroken = true;
             th.breakTime = now;
-
-            for (let s = 0; s < N; s++) {
-              const pt = th.pts[s];
-              pt.vx += (pt.hx - pt.x) * 0.12;
-              pt.vy += (pt.hy - pt.y) * 0.12;
-            }
+            th.dragReleaseTime = now;
+            th.releasePt = { x: mx, y: my };
           }
         }
 
         for (let s = 0; s < N; s++) {
           const p = th.pts[s];
 
-          if (th.isHooked && s === th.hookPtIdx && isPointerDown && mx > -500) {
-            p.x = mx;
-            p.y = my;
-            p.vx = 0;
-            p.vy = 0;
+          if (rawProgress < 1.0) {
+            // 1. Center of straight line lerps smoothly from offscreen (sx, sy) to home (hx, hy)
+            const lineCenterX = p.sx + (p.hx - p.sx) * easeIntro;
+            const lineCenterY = p.sy + (p.hy - p.sy) * easeIntro;
+
+            // 2. Dead-straight line position during flight
+            const straightX = lineCenterX + (p.tRatio - 0.5) * p.lineLength * Math.cos(p.lineAngle);
+            const straightY = lineCenterY + (p.tRatio - 0.5) * p.lineLength * Math.sin(p.lineAngle);
+
+            // 3. Smooth monotonic flex/bend into target curved map shape (100% deterministic, 0% jiggle)
+            p.x = straightX + (p.hx - straightX) * bendFactor;
+            p.y = straightY + (p.hy - straightY) * bendFactor;
           } else {
-            const angle = Math.atan2(p.hy - cy, p.hx - cx);
-            const targetCurvedX = p.hx + Math.cos(angle) * breath;
-            const targetCurvedY = p.hy + Math.sin(angle) * breath;
+            // POST-INTRO 100% DETERMINISTIC GEOMETRIC POSITIONING (ZERO VELOCITY JIGGLE)
+            if (th.isHooked && isPointerDown && mx > -500) {
+              // Catenary curve distortion towards cursor when dragged
+              const hookIdx = th.hookPtIdx;
+              const distFromHook = Math.abs(s - hookIdx) / N;
+              const influence = Math.max(0, 1 - distFromHook * 3);
 
-            if (rawProgress < 1.0) {
-              // 1. Center of straight line lerps smoothly from offscreen (sx, sy) to home (hx, hy)
-              const lineCenterX = p.sx + (p.hx - p.sx) * easeIntro;
-              const lineCenterY = p.sy + (p.hy - p.sy) * easeIntro;
+              p.x = p.hx + (mx - p.hx) * influence;
+              p.y = p.hy + (my - p.hy) * influence;
+            } else if (th.releasePt && now - th.dragReleaseTime < 600) {
+              // Smooth exponential return after release (100% stable, zero oscillation/jiggle)
+              const relProgress = (now - th.dragReleaseTime) / 600;
+              const easeReturn = Math.pow(1 - relProgress, 2); // quadratic decay to 0
 
-              // 2. Dead-straight line position during flight
-              const straightX = lineCenterX + (p.tRatio - 0.5) * p.lineLength * Math.cos(p.lineAngle);
-              const straightY = lineCenterY + (p.tRatio - 0.5) * p.lineLength * Math.sin(p.lineAngle);
+              const hookIdx = th.hookPtIdx;
+              const distFromHook = Math.abs(s - hookIdx) / N;
+              const influence = Math.max(0, 1 - distFromHook * 3);
 
-              // 3. Smooth monotonic flex/bend into target curved map shape (0% bounce)
-              const curTargetX = straightX + (targetCurvedX - straightX) * bendFactor;
-              const curTargetY = straightY + (targetCurvedY - straightY) * bendFactor;
+              const startOffsetPtX = th.releasePt.x - p.hx;
+              const startOffsetPtY = th.releasePt.y - p.hy;
 
-              p.x += (curTargetX - p.x) * 0.14;
-              p.y += (curTargetY - p.y) * 0.14;
-              p.vx = 0;
-              p.vy = 0;
+              p.x = p.hx + startOffsetPtX * influence * easeReturn;
+              p.y = p.hy + startOffsetPtY * influence * easeReturn;
             } else {
-              // Post-intro rope tension physics equilibrium
-              p.vx += (targetCurvedX - p.x) * ANCHOR_STIFF;
-              p.vy += (targetCurvedY - p.y) * ANCHOR_STIFF;
-
-              // 1. Internal Rope Tension along adjacent nodes in the string
-              if (s > 0) {
-                const prev = th.pts[s - 1];
-                p.vx += (prev.x - p.x) * ROPE_TENSION;
-                p.vy += (prev.y - p.y) * ROPE_TENSION;
-              }
-              if (s < N - 1) {
-                const next = th.pts[s + 1];
-                p.vx += (next.x - p.x) * ROPE_TENSION;
-                p.vy += (next.y - p.y) * ROPE_TENSION;
-              }
-
-              // 2. Cross-Link Tension forces connecting intersecting ropes into circle shape
-              for (const link of th.crossLinks) {
-                if (link.ptIdx === s) {
-                  const targetTh = threads[link.targetThreadIdx];
-                  if (targetTh && !targetTh.isBroken) {
-                    const targetPt = targetTh.pts[link.targetPtIdx];
-                    p.vx += (targetPt.x - p.x) * CROSS_TENSION;
-                    p.vy += (targetPt.y - p.y) * CROSS_TENSION;
-                  }
-                }
-              }
-
-              const speedSq = p.vx * p.vx + p.vy * p.vy;
-              if (speedSq > MAX_SPEED * MAX_SPEED) {
-                const spd = Math.sqrt(speedSq);
-                p.vx = (p.vx / spd) * MAX_SPEED;
-                p.vy = (p.vy / spd) * MAX_SPEED;
-              }
-
-              p.vx *= DAMPING;
-              p.vy *= DAMPING;
-              p.x += p.vx;
-              p.y += p.vy;
+              // Rest state: perfectly stable home coordinates (rock-solid, crisp, zero jiggle)
+              p.x = p.hx;
+              p.y = p.hy;
             }
           }
         }
@@ -601,7 +543,13 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     };
     const onPointerUp = () => {
       isPointerDown = false;
-      for (const th of threads) th.isHooked = false;
+      for (const th of threads) {
+        if (th.isHooked) {
+          th.isHooked = false;
+          th.dragReleaseTime = performance.now();
+          th.releasePt = { x: mx, y: my };
+        }
+      }
     };
     const onPointerLeave = () => {
       isPointerDown = false;
@@ -635,7 +583,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Tension-driven 2D red rope Earth map — straight ropes enter from offscreen across 4 geographic stages and bend into a circle and map silhouette via mutual rope tension. Click and hold to pull threads apart"
+      aria-label="Deterministic zero-jiggle 2D red thread map of Earth — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into crisp, rock-solid world coastlines. Click and hold to grab and pull threads apart"
       role="img"
     />
   );
