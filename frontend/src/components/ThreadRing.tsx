@@ -100,8 +100,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         geoPts: { lon: number; lat: number }[],
         stageDelayMs: number,
         alpha: number = 0.65,
-        lw: number = 1.0,
-        subdivide: number = 28
+        lw: number = 0.95,
+        subdivide: number = 24
       ) => {
         const projPts = geoPts
           .map((g) => projectGeo(g.lon, g.lat))
@@ -220,50 +220,99 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         });
       }
 
-      // ── STAGE 2 (1200ms - 2400ms): High-Detail India Subcontinent & Rivers ─
+      // ── STAGE 2 (1200ms - 2400ms): High-Precision India (J&K Crown, Rivers & Himalayas) ─
       const STAGE_2_DELAY = 1200;
 
-      const indiaCoast = [
-        { lon: 68.2, lat: 23.7 }, { lon: 69.5, lat: 22.8 }, { lon: 70.4, lat: 21.6 },
-        { lon: 72.8, lat: 21.2 }, { lon: 72.8, lat: 19.0 }, { lon: 73.8, lat: 15.4 },
-        { lon: 74.8, lat: 12.8 }, { lon: 75.8, lat: 11.2 }, { lon: 76.5, lat: 9.5 },
-        { lon: 77.5, lat: 8.1 },  { lon: 78.2, lat: 8.8 },  { lon: 79.8, lat: 10.3 },
-        { lon: 80.3, lat: 13.1 }, { lon: 80.8, lat: 15.8 }, { lon: 82.2, lat: 16.9 },
-        { lon: 83.3, lat: 17.7 }, { lon: 85.0, lat: 19.3 }, { lon: 86.8, lat: 21.0 },
-        { lon: 88.2, lat: 21.6 }, { lon: 91.8, lat: 22.3 }, { lon: 92.5, lat: 25.0 },
-        { lon: 95.0, lat: 27.5 }, { lon: 88.6, lat: 27.3 }, { lon: 85.3, lat: 27.7 },
-        { lon: 81.0, lat: 30.0 }, { lon: 77.0, lat: 31.8 }, { lon: 74.8, lat: 34.1 },
-        { lon: 73.8, lat: 34.8 }, { lon: 71.5, lat: 30.2 }, { lon: 69.8, lat: 26.8 },
-        { lon: 68.2, lat: 23.7 },
+      // Official Full Boundary of India (Including Jammu, Kashmir & Aksai Chin / Ladakh Crown)
+      const indiaCoastAndCrown = [
+        { lon: 68.2, lat: 23.7 }, // Kutch, Gujarat
+        { lon: 69.5, lat: 22.8 }, // Kathiawar West
+        { lon: 70.4, lat: 21.6 }, // Diu
+        { lon: 72.8, lat: 21.2 }, // Khambhat
+        { lon: 72.8, lat: 19.0 }, // Mumbai
+        { lon: 73.8, lat: 15.4 }, // Goa
+        { lon: 74.8, lat: 12.8 }, // Mangalore
+        { lon: 75.8, lat: 11.2 }, // Malabar
+        { lon: 76.5, lat: 9.5 },  // Kochi
+        { lon: 77.5, lat: 8.1 },  // Kanyakumari
+        { lon: 78.2, lat: 8.8 },  // Tirunelveli
+        { lon: 79.8, lat: 10.3 }, // Point Calimere
+        { lon: 80.3, lat: 13.1 }, // Chennai
+        { lon: 80.8, lat: 15.8 }, // Nellore
+        { lon: 82.2, lat: 16.9 }, // AP Coast
+        { lon: 83.3, lat: 17.7 }, // Visakhapatnam
+        { lon: 85.0, lat: 19.3 }, // Odisha Coast
+        { lon: 86.8, lat: 21.0 }, // Balasore
+        { lon: 88.2, lat: 21.6 }, // Sundarbans
+        { lon: 91.8, lat: 22.3 }, // Bengal / Tripura
+        { lon: 92.5, lat: 25.0 }, // Meghalaya
+        { lon: 95.5, lat: 27.8 }, // Arunachal East Tip (Kibithu)
+        { lon: 91.5, lat: 27.8 }, // Bhutan / Arunachal Border
+        { lon: 88.6, lat: 27.3 }, // Sikkim / Kanchenjunga
+        { lon: 85.3, lat: 27.7 }, // Nepal Border
+        { lon: 81.0, lat: 30.0 }, // Uttarakhand Border
+        { lon: 77.0, lat: 31.8 }, // Himachal Pradesh
+        // ── Jammu, Kashmir & Ladakh Crown (100% Precise Northern Tip) ──
+        { lon: 75.8, lat: 33.2 }, // Jammu / Banihal
+        { lon: 74.2, lat: 34.0 }, // Punch / Line of Control
+        { lon: 73.6, lat: 34.8 }, // Muzaffarabad / Northern Arc
+        { lon: 74.8, lat: 35.8 }, // Gilgit-Baltistan / Nanga Parbat
+        { lon: 76.5, lat: 35.9 }, // K2 / Karakoram Crest
+        { lon: 77.8, lat: 35.5 }, // Siachen Glacier / Karakoram Pass
+        { lon: 79.5, lat: 35.2 }, // Northern Aksai Chin
+        { lon: 79.5, lat: 33.8 }, // Eastern Aksai Chin / Pangong Tso
+        { lon: 78.8, lat: 32.5 }, // Demchok / Eastern Ladakh
+        { lon: 76.8, lat: 32.0 }, // Lahaul & Spiti Border
+        { lon: 74.0, lat: 31.5 }, // Punjab / Wagah Frontier
+        { lon: 69.8, lat: 26.8 }, // Rajasthan / Thar Desert
+        { lon: 68.2, lat: 23.7 }, // Back to Kutch
       ];
+
+      // 5 Layered strands for India's border & Crown
       for (let offset = -0.6; offset <= 0.6; offset += 0.3) {
-        const path = indiaCoast.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.25 }));
-        addGeoThreadPath(path, STAGE_2_DELAY, 0.85, 1.4, 34);
+        const path = indiaCoastAndCrown.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.25 }));
+        addGeoThreadPath(path, STAGE_2_DELAY, 0.88, 1.45, 36);
       }
 
-      // Major Rivers
+      // Dedicated Jammu, Kashmir & Ladakh Northern Crown Highlight Strands
+      const jkLadakhCrownStrand1 = [
+        { lon: 73.6, lat: 34.8 }, { lon: 74.8, lat: 35.8 }, { lon: 76.5, lat: 35.9 },
+        { lon: 77.8, lat: 35.5 }, { lon: 79.5, lat: 35.2 }, { lon: 79.5, lat: 33.8 },
+      ];
+      addGeoThreadPath(jkLadakhCrownStrand1, STAGE_2_DELAY + 150, 0.85, 1.35, 24);
+      addGeoThreadPath(jkLadakhCrownStrand1.map(g => ({ lon: g.lon, lat: g.lat - 0.5 })), STAGE_2_DELAY + 250, 0.75, 1.15, 24);
+
+      // Karakoram & Zanskar Mountain Ranges (Ladakh Spine)
+      const karakoramSpine = [
+        { lon: 74.0, lat: 36.2 }, { lon: 76.0, lat: 35.5 }, { lon: 78.2, lat: 34.8 }, { lon: 79.5, lat: 34.0 },
+      ];
+      addGeoThreadPath(karakoramSpine, STAGE_2_DELAY + 350, 0.75, 1.2, 20);
+
+      // Indus River through Ladakh & Kashmir
+      addGeoThreadPath([
+        { lon: 81.0, lat: 31.0 }, { lon: 78.5, lat: 33.8 }, { lon: 76.0, lat: 34.5 },
+        { lon: 73.0, lat: 35.5 }, { lon: 71.5, lat: 33.0 }, { lon: 70.0, lat: 28.0 }, { lon: 68.0, lat: 24.0 },
+      ], STAGE_2_DELAY + 450, 0.70, 1.1, 24);
+
+      // Ganga River
       addGeoThreadPath([
         { lon: 79.0, lat: 31.0 }, { lon: 78.1, lat: 30.0 }, { lon: 79.5, lat: 28.5 },
         { lon: 81.8, lat: 25.4 }, { lon: 85.1, lat: 25.6 }, { lon: 88.0, lat: 24.5 },
         { lon: 89.5, lat: 23.0 }, { lon: 88.3, lat: 21.8 },
-      ], STAGE_2_DELAY + 300, 0.65, 1.0, 24); // Ganga
+      ], STAGE_2_DELAY + 550, 0.65, 1.0, 24);
 
+      // Brahmaputra River
       addGeoThreadPath([
         { lon: 82.0, lat: 30.6 }, { lon: 87.0, lat: 29.2 }, { lon: 95.0, lat: 28.2 },
         { lon: 95.5, lat: 27.5 }, { lon: 91.5, lat: 26.2 }, { lon: 89.8, lat: 25.2 },
-      ], STAGE_2_DELAY + 450, 0.65, 1.0, 24); // Brahmaputra
+      ], STAGE_2_DELAY + 650, 0.65, 1.0, 24);
 
-      addGeoThreadPath([
-        { lon: 81.0, lat: 31.0 }, { lon: 76.0, lat: 34.5 }, { lon: 73.0, lat: 35.5 },
-        { lon: 71.5, lat: 33.0 }, { lon: 70.0, lat: 28.0 }, { lon: 68.0, lat: 24.0 },
-      ], STAGE_2_DELAY + 600, 0.65, 1.0, 22); // Indus
-
-      // Himalayas Crest
+      // Himalayas Crest Range
       const himalayasCrest = [
         { lon: 71.5, lat: 35.8 }, { lon: 75.5, lat: 34.2 }, { lon: 80.5, lat: 30.2 },
         { lon: 85.0, lat: 28.2 }, { lon: 88.5, lat: 27.6 }, { lon: 95.0, lat: 28.5 },
       ];
-      addGeoThreadPath(himalayasCrest, STAGE_2_DELAY + 700, 0.78, 1.3, 26);
+      addGeoThreadPath(himalayasCrest, STAGE_2_DELAY + 750, 0.78, 1.3, 26);
       addGeoThreadPath(himalayasCrest.map(g => ({ lon: g.lon, lat: g.lat - 0.6 })), STAGE_2_DELAY + 850, 0.68, 1.0, 26);
 
       // Ghats
@@ -284,36 +333,20 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       // ── STAGE 3 (2600ms - 3800ms): High-Precision Arabia & Africa Coastlines ─
       const STAGE_3_DELAY = 2600;
 
-      // Arabian Peninsula Coastline (Saudi Arabia, Yemen, Oman, UAE, Qatar, Kuwait)
       const arabiaMainCoast = [
-        { lon: 32.5, lat: 29.9 }, // Suez / Sinai
-        { lon: 34.8, lat: 27.8 }, // Gulf of Aqaba
-        { lon: 36.5, lat: 26.0 }, // Yanbu
-        { lon: 39.1, lat: 21.5 }, // Jeddah
-        { lon: 41.5, lat: 16.5 }, // Jizan
-        { lon: 43.0, lat: 12.6 }, // Bab-el-Mandeb
-        { lon: 45.0, lat: 12.8 }, // Aden
-        { lon: 48.0, lat: 14.0 }, // Mukalla
-        { lon: 53.0, lat: 16.5 }, // Salalah / Dhofar
-        { lon: 55.4, lat: 19.0 }, // Oman South Coast
-        { lon: 59.8, lat: 22.5 }, // Ras al Hadd (Easternmost point)
-        { lon: 58.8, lat: 23.6 }, // Muscat
-        { lon: 56.5, lat: 26.2 }, // Musandam Peninsula / Strait of Hormuz
-        { lon: 55.0, lat: 25.0 }, // UAE / Dubai
-        { lon: 51.5, lat: 25.3 }, // Qatar Peninsula East
-        { lon: 50.8, lat: 26.1 }, // Bahrain / Qatar West
-        { lon: 50.0, lat: 27.0 }, // Jubail
-        { lon: 48.5, lat: 29.5 }, // Kuwait Coast
-        { lon: 48.0, lat: 30.0 }, // Shatt al-Arab / Basra
+        { lon: 32.5, lat: 29.9 }, { lon: 34.8, lat: 27.8 }, { lon: 36.5, lat: 26.0 },
+        { lon: 39.1, lat: 21.5 }, { lon: 41.5, lat: 16.5 }, { lon: 43.0, lat: 12.6 },
+        { lon: 45.0, lat: 12.8 }, { lon: 48.0, lat: 14.0 }, { lon: 53.0, lat: 16.5 },
+        { lon: 55.4, lat: 19.0 }, { lon: 59.8, lat: 22.5 }, { lon: 58.8, lat: 23.6 },
+        { lon: 56.5, lat: 26.2 }, { lon: 55.0, lat: 25.0 }, { lon: 51.5, lat: 25.3 },
+        { lon: 50.8, lat: 26.1 }, { lon: 50.0, lat: 27.0 }, { lon: 48.5, lat: 29.5 },
+        { lon: 48.0, lat: 30.0 },
       ];
-
-      // Layered strands for Arabia for high visual fidelity matching India
       for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
         const path = arabiaMainCoast.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
         addGeoThreadPath(path, STAGE_3_DELAY, 0.80, 1.3, 30);
       }
 
-      // Red Sea African Coast (Egypt, Sudan, Eritrea, Djibouti)
       const redSeaAfricanCoast = [
         { lon: 32.2, lat: 29.5 }, { lon: 34.0, lat: 27.0 }, { lon: 35.5, lat: 24.0 },
         { lon: 37.0, lat: 20.0 }, { lon: 38.5, lat: 18.0 }, { lon: 41.5, lat: 15.0 },
@@ -321,7 +354,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ];
       addGeoThreadPath(redSeaAfricanCoast, STAGE_3_DELAY + 250, 0.70, 1.1, 24);
 
-      // Nile River & Delta
       const nileRiver = [
         { lon: 33.0, lat: 4.0 }, { lon: 31.8, lat: 9.5 }, { lon: 32.5, lat: 15.6 },
         { lon: 30.5, lat: 19.5 }, { lon: 32.8, lat: 24.0 }, { lon: 31.2, lat: 30.0 },
@@ -329,105 +361,64 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ];
       addGeoThreadPath(nileRiver, STAGE_3_DELAY + 400, 0.75, 1.15, 26);
 
-      // Horn of Africa & East Africa (Somalia, Kenya, Tanzania, Mozambique)
       const hornOfAfricaDetailed = [
-        { lon: 43.0, lat: 11.6 }, // Djibouti
-        { lon: 46.0, lat: 11.8 }, // Berbera
-        { lon: 51.2, lat: 11.8 }, // Cape Guardafui (Horn of Africa tip)
-        { lon: 50.0, lat: 9.5 },  // Ras Hafun
-        { lon: 48.0, lat: 5.5 },  // Hobyo
-        { lon: 45.3, lat: 2.0 },  // Mogadishu
-        { lon: 41.5, lat: -1.5 }, // Kismayo / Kenya border
-        { lon: 39.6, lat: -4.0 }, // Mombasa
-        { lon: 39.0, lat: -6.8 }, // Dar es Salaam / Zanzibar
-        { lon: 40.5, lat: -15.0 }, // Mozambique
+        { lon: 43.0, lat: 11.6 }, { lon: 46.0, lat: 11.8 }, { lon: 51.2, lat: 11.8 },
+        { lon: 50.0, lat: 9.5 },  { lon: 48.0, lat: 5.5 },  { lon: 45.3, lat: 2.0 },
+        { lon: 41.5, lat: -1.5 }, { lon: 39.6, lat: -4.0 }, { lon: 39.0, lat: -6.8 },
+        { lon: 40.5, lat: -15.0 },
       ];
       for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
         const path = hornOfAfricaDetailed.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
         addGeoThreadPath(path, STAGE_3_DELAY + 600, 0.80, 1.25, 28);
       }
 
-      // Madagascar Island Contour & Central Spine
       const madagascarDetailed = [
-        { lon: 49.2, lat: -12.0 }, // Diego Suarez (North Tip)
-        { lon: 50.5, lat: -15.5 }, // Antalaha
-        { lon: 49.5, lat: -19.0 }, // Toamasina
-        { lon: 47.0, lat: -25.5 }, // Cap Sainte Marie (South Tip)
-        { lon: 44.0, lat: -25.0 }, // Toliara
-        { lon: 43.6, lat: -20.0 }, // Morondava
-        { lon: 46.5, lat: -15.5 }, // Mahajanga
-        { lon: 49.2, lat: -12.0 },
+        { lon: 49.2, lat: -12.0 }, { lon: 50.5, lat: -15.5 }, { lon: 49.5, lat: -19.0 },
+        { lon: 47.0, lat: -25.5 }, { lon: 44.0, lat: -25.0 }, { lon: 43.6, lat: -20.0 },
+        { lon: 46.5, lat: -15.5 }, { lon: 49.2, lat: -12.0 },
       ];
       addGeoThreadPath(madagascarDetailed, STAGE_3_DELAY + 900, 0.75, 1.15, 22);
 
       // ── STAGE 4 (4000ms - 5200ms): High-Precision SE Asia, Indonesia & China ─
       const STAGE_4_DELAY = 4000;
 
-      // Indochina Peninsula & Vietnam Coastline (Myanmar, Thailand, Cambodia, Vietnam)
       const indochinaDetailed = [
-        { lon: 92.5, lat: 20.8 }, // Sittwe / Myanmar
-        { lon: 94.5, lat: 16.0 }, // Pathein / Irrawaddy Delta
-        { lon: 96.2, lat: 16.8 }, // Yangon
-        { lon: 98.5, lat: 14.0 }, // Dawei
-        { lon: 98.5, lat: 9.8 },  // Kra Isthmus
-        { lon: 99.8, lat: 7.0 },  // Phuket
-        { lon: 103.8, lat: 1.3 }, // Singapore / Malacca Strait
-        { lon: 103.5, lat: 6.0 }, // Terengganu
-        { lon: 104.5, lat: 10.0 }, // Gulf of Thailand / Kampot
-        { lon: 107.0, lat: 10.5 }, // Saigon / Mekong Delta
-        { lon: 109.2, lat: 13.5 }, // Nha Trang
-        { lon: 108.0, lat: 16.5 }, // Da Nang
-        { lon: 106.5, lat: 20.8 }, // Haiphong / Red River Delta
-        { lon: 108.0, lat: 21.5 }, // China Border
+        { lon: 92.5, lat: 20.8 }, { lon: 94.5, lat: 16.0 }, { lon: 96.2, lat: 16.8 },
+        { lon: 98.5, lat: 14.0 }, { lon: 98.5, lat: 9.8 },  { lon: 99.8, lat: 7.0 },
+        { lon: 103.8, lat: 1.3 }, { lon: 103.5, lat: 6.0 }, { lon: 104.5, lat: 10.0 },
+        { lon: 107.0, lat: 10.5 }, { lon: 109.2, lat: 13.5 }, { lon: 108.0, lat: 16.5 },
+        { lon: 106.5, lat: 20.8 }, { lon: 108.0, lat: 21.5 },
       ];
       for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
         const path = indochinaDetailed.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
         addGeoThreadPath(path, STAGE_4_DELAY, 0.80, 1.3, 30);
       }
 
-      // Mekong River
       const mekongRiver = [
         { lon: 94.0, lat: 33.0 }, { lon: 99.0, lat: 24.0 }, { lon: 101.0, lat: 20.0 },
         { lon: 104.0, lat: 17.0 }, { lon: 105.5, lat: 11.5 }, { lon: 105.0, lat: 9.5 },
       ];
       addGeoThreadPath(mekongRiver, STAGE_4_DELAY + 200, 0.70, 1.05, 22);
 
-      // Sumatra Island Arc
       const sumatraDetailed = [
-        { lon: 95.3, lat: 5.5 },  // Banda Aceh
-        { lon: 97.5, lat: 4.2 },  // Lhokseumawe
-        { lon: 98.6, lat: 3.5 },  // Medan
-        { lon: 101.0, lat: 0.5 }, // Padang
-        { lon: 103.5, lat: -3.0 }, // Palembang
-        { lon: 106.0, lat: -6.0 }, // Sunda Strait
+        { lon: 95.3, lat: 5.5 },  { lon: 97.5, lat: 4.2 },  { lon: 98.6, lat: 3.5 },
+        { lon: 101.0, lat: 0.5 }, { lon: 103.5, lat: -3.0 }, { lon: 106.0, lat: -6.0 },
       ];
       addGeoThreadPath(sumatraDetailed, STAGE_4_DELAY + 400, 0.75, 1.15, 22);
 
-      // Java Island Arc
       const javaDetailed = [
-        { lon: 106.0, lat: -6.0 }, // Jakarta
-        { lon: 108.5, lat: -6.8 }, // Cirebon
-        { lon: 110.0, lat: -7.0 }, // Semarang
-        { lon: 112.5, lat: -7.5 }, // Surabaya
-        { lon: 114.5, lat: -8.5 }, // Banyuwangi / Bali Strait
+        { lon: 106.0, lat: -6.0 }, { lon: 108.5, lat: -6.8 }, { lon: 110.0, lat: -7.0 },
+        { lon: 112.5, lat: -7.5 }, { lon: 114.5, lat: -8.5 },
       ];
       addGeoThreadPath(javaDetailed, STAGE_4_DELAY + 550, 0.72, 1.1, 18);
 
-      // Borneo / Kalimantan Island Contour
       const borneoDetailed = [
-        { lon: 109.0, lat: 2.0 },  // Pontianak
-        { lon: 112.0, lat: 3.5 },  // Kuching / Sarawak
-        { lon: 114.0, lat: 4.5 },  // Brunei
-        { lon: 118.0, lat: 5.0 },  // Sabah / Sandakan
-        { lon: 119.0, lat: 4.0 },  // Tawau
-        { lon: 117.5, lat: -1.0 }, // Samarinda
-        { lon: 116.0, lat: -4.0 }, // Banjarmasin
-        { lon: 110.0, lat: -3.0 }, // Ketapang
-        { lon: 109.0, lat: 2.0 },
+        { lon: 109.0, lat: 2.0 },  { lon: 112.0, lat: 3.5 },  { lon: 114.0, lat: 4.5 },
+        { lon: 118.0, lat: 5.0 },  { lon: 119.0, lat: 4.0 },  { lon: 117.5, lat: -1.0 },
+        { lon: 116.0, lat: -4.0 }, { lon: 110.0, lat: -3.0 }, { lon: 109.0, lat: 2.0 },
       ];
       addGeoThreadPath(borneoDetailed, STAGE_4_DELAY + 700, 0.75, 1.15, 24);
 
-      // Philippines Archipelago (Luzon, Visayas, Mindanao)
       const philippinesLuzon = [
         { lon: 120.0, lat: 18.5 }, { lon: 122.0, lat: 18.0 }, { lon: 121.5, lat: 14.5 },
         { lon: 124.0, lat: 13.0 },
@@ -440,11 +431,10 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ];
       addGeoThreadPath(philippinesMindanao, STAGE_4_DELAY + 950, 0.70, 1.05, 18);
 
-      // China East Coastline & Deltas
       const chinaCoastDetailed = [
-        { lon: 108.5, lat: 21.5 }, { lon: 110.5, lat: 21.0 }, { lon: 113.5, lat: 22.5 }, // Hong Kong / Pearl River
-        { lon: 118.0, lat: 24.5 }, { lon: 121.5, lat: 31.2 }, // Shanghai / Yangtze Delta
-        { lon: 120.0, lat: 36.0 }, { lon: 122.0, lat: 39.0 }, // Shandong / Bohai
+        { lon: 108.5, lat: 21.5 }, { lon: 110.5, lat: 21.0 }, { lon: 113.5, lat: 22.5 },
+        { lon: 118.0, lat: 24.5 }, { lon: 121.5, lat: 31.2 }, { lon: 120.0, lat: 36.0 },
+        { lon: 122.0, lat: 39.0 },
       ];
       for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
         const path = chinaCoastDetailed.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
@@ -680,7 +670,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="High-precision 2D red thread map of Earth — layered, crisp thread coastlines for Arabia, Africa, Horn of Africa, Madagascar, Indochina, Sumatra, Java, Borneo, Philippines, and China with spinning outer emblem ring. Click and hold to grab and pull threads apart"
+      aria-label="High-precision 2D red thread map of Earth with accurate Jammu, Kashmir & Ladakh Crown representation — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into rock-solid world coastlines. Click and hold to grab and pull threads apart"
       role="img"
     />
   );
