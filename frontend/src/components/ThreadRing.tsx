@@ -14,6 +14,9 @@ const REPAIR_MS   = 1200;      // ms to re-knit snapped thread
 // Staged Intro Convergence Duration per thread (ms)
 const CONVERGE_MS = 2400;
 
+// Outer Ring Continuous Rotation Speed (rad/ms)
+const RING_SPIN_SPEED = 0.00018;
+
 // Terracotta Red color matching favicon (#bf4722)
 const ACC_R = 191, ACC_G = 71, ACC_B = 34;
 
@@ -27,6 +30,9 @@ interface Pt {
   tRatio: number; // Position ratio along thread [0, 1]
   lineAngle: number;
   lineLength: number;
+  baseAngle?: number; // Base angle for outer ring rotation
+  radius?: number;    // Radius for outer ring rotation
+  arcSpan?: number;
 }
 
 interface Thread {
@@ -38,8 +44,9 @@ interface Thread {
   hookPtIdx: number;
   isBroken: boolean;
   breakTime: number;
-  dragReleaseTime: number; // time when thread was released from drag
+  dragReleaseTime: number;
   releasePt: { x: number; y: number } | null;
+  isOuterRing?: boolean;
 }
 
 export function ThreadRing({ className = "" }: { className?: string }) {
@@ -152,10 +159,11 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           breakTime: 0,
           dragReleaseTime: 0,
           releasePt: null,
+          isOuterRing: false,
         });
       };
 
-      // ── STAGE 1 (0ms - 1000ms): Outer Emblem Circle Frame ──────────────────
+      // ── STAGE 1 (0ms - 1000ms): Outer Emblem Circle Frame (Rotates) ────────
       const STAGE_1_DELAY = 0;
       const N_OUTER = 50;
       for (let i = 0; i < N_OUTER; i++) {
@@ -192,6 +200,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
             tRatio: t,
             lineAngle: lineTangentAngle,
             lineLength,
+            baseAngle,
+            radius: threadR,
+            arcSpan,
           });
         }
 
@@ -206,6 +217,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           breakTime: 0,
           dragReleaseTime: 0,
           releasePt: null,
+          isOuterRing: true,
         });
       }
 
@@ -270,7 +282,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ];
       addGeoThreadPath(sriLanka, STAGE_2_DELAY + 1100, 0.78, 1.2, 16);
 
-      // ── STAGE 3 (2600ms - 3800ms): Middle East & Africa Ropes ─────────────
+      // ── STAGE 3 (2600ms - 3800ms): Middle East & Africa Ropes ────────────
       const STAGE_3_DELAY = 2600;
 
       const nileRiver = [
@@ -430,15 +442,17 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       const elapsed = now - t0;
       updateHooks(now);
 
+      // Spin angle for outer emblem ring
+      const spinAngle = elapsed * RING_SPIN_SPEED;
+
       for (let i = 0; i < threads.length; i++) {
         const th = threads[i];
         const localTime = elapsed - th.delay;
-        if (localTime < 0) continue; // Waiting for stage to start
+        if (localTime < 0) continue;
 
         const rawProgress = Math.min(localTime / CONVERGE_MS, 1);
         const easeIntro = 1 - Math.pow(1 - rawProgress, 3); // Cubic ease-out
 
-        // Pure monotonic bending factor (zero bounce/overshoot)
         let bendFactor = 0;
         if (rawProgress > 0.30) {
           const bendProgress = Math.min((rawProgress - 0.30) / 0.70, 1);
@@ -464,46 +478,49 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         for (let s = 0; s < N; s++) {
           const p = th.pts[s];
 
-          if (rawProgress < 1.0) {
-            // 1. Center of straight line lerps smoothly from offscreen (sx, sy) to home (hx, hy)
-            const lineCenterX = p.sx + (p.hx - p.sx) * easeIntro;
-            const lineCenterY = p.sy + (p.hy - p.sy) * easeIntro;
+          // Compute home target (outer ring spins continuously; landmasses remain stable)
+          let targetHx = p.hx;
+          let targetHy = p.hy;
 
-            // 2. Dead-straight line position during flight
+          if (th.isOuterRing && p.baseAngle !== undefined && p.radius !== undefined && p.arcSpan !== undefined) {
+            const currentAngle = p.baseAngle + spinAngle + (p.tRatio - 0.5) * p.arcSpan;
+            targetHx = cx + p.radius * Math.cos(currentAngle);
+            targetHy = cy + p.radius * Math.sin(currentAngle);
+          }
+
+          if (rawProgress < 1.0) {
+            const lineCenterX = p.sx + (targetHx - p.sx) * easeIntro;
+            const lineCenterY = p.sy + (targetHy - p.sy) * easeIntro;
+
             const straightX = lineCenterX + (p.tRatio - 0.5) * p.lineLength * Math.cos(p.lineAngle);
             const straightY = lineCenterY + (p.tRatio - 0.5) * p.lineLength * Math.sin(p.lineAngle);
 
-            // 3. Smooth monotonic flex/bend into target curved map shape (100% deterministic, 0% jiggle)
-            p.x = straightX + (p.hx - straightX) * bendFactor;
-            p.y = straightY + (p.hy - straightY) * bendFactor;
+            p.x = straightX + (targetHx - straightX) * bendFactor;
+            p.y = straightY + (targetHy - straightY) * bendFactor;
           } else {
-            // POST-INTRO 100% DETERMINISTIC GEOMETRIC POSITIONING (ZERO VELOCITY JIGGLE)
             if (th.isHooked && isPointerDown && mx > -500) {
-              // Catenary curve distortion towards cursor when dragged
               const hookIdx = th.hookPtIdx;
               const distFromHook = Math.abs(s - hookIdx) / N;
               const influence = Math.max(0, 1 - distFromHook * 3);
 
-              p.x = p.hx + (mx - p.hx) * influence;
-              p.y = p.hy + (my - p.hy) * influence;
+              p.x = targetHx + (mx - targetHx) * influence;
+              p.y = targetHy + (my - targetHy) * influence;
             } else if (th.releasePt && now - th.dragReleaseTime < 600) {
-              // Smooth exponential return after release (100% stable, zero oscillation/jiggle)
               const relProgress = (now - th.dragReleaseTime) / 600;
-              const easeReturn = Math.pow(1 - relProgress, 2); // quadratic decay to 0
+              const easeReturn = Math.pow(1 - relProgress, 2);
 
               const hookIdx = th.hookPtIdx;
               const distFromHook = Math.abs(s - hookIdx) / N;
               const influence = Math.max(0, 1 - distFromHook * 3);
 
-              const startOffsetPtX = th.releasePt.x - p.hx;
-              const startOffsetPtY = th.releasePt.y - p.hy;
+              const startOffsetPtX = th.releasePt.x - targetHx;
+              const startOffsetPtY = th.releasePt.y - targetHy;
 
-              p.x = p.hx + startOffsetPtX * influence * easeReturn;
-              p.y = p.hy + startOffsetPtY * influence * easeReturn;
+              p.x = targetHx + startOffsetPtX * influence * easeReturn;
+              p.y = targetHy + startOffsetPtY * influence * easeReturn;
             } else {
-              // Rest state: perfectly stable home coordinates (rock-solid, crisp, zero jiggle)
-              p.x = p.hx;
-              p.y = p.hy;
+              p.x = targetHx;
+              p.y = targetHy;
             }
           }
         }
@@ -583,7 +600,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Deterministic zero-jiggle 2D red thread map of Earth — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into crisp, rock-solid world coastlines. Click and hold to grab and pull threads apart"
+      aria-label="2D red thread Earth map with slowly spinning outer emblem ring — dead-straight thread lines fly in from offscreen across all 360° angles in 4 geographic stages and flex/bend smoothly into rock-solid world coastlines. Click and hold to grab and pull threads apart"
       role="img"
     />
   );
