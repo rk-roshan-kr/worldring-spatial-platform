@@ -138,7 +138,7 @@ export function Hero({ onOpenContact }: { onOpenContact?: (mode?: string) => voi
 
             {/* Canvas container — square aspect ratio */}
             <div
-              className="relative rounded border border-line bg-paper-deep overflow-hidden"
+              className="relative w-full"
               style={{ aspectRatio: "1 / 1" }}
             >
               <ThreadRing className="absolute inset-0 w-full h-full" />
