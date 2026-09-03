@@ -330,6 +330,7 @@ html.js [data-reveal].is-in {
   }
   #snap-container {
     scroll-snap-type: y mandatory;
+    scroll-padding-top: 4rem;
     height: 100vh;
     overflow-y: auto;
     
@@ -343,7 +344,13 @@ html.js [data-reveal].is-in {
   .section-snap-wrap {
     scroll-snap-align: start;
     scroll-snap-stop: always;
+    scroll-margin-top: 4rem;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 4.5rem !important;
+    padding-bottom: 2.5rem !important;
   }
   
   /* Repeating Blueprint Grid (Dark Theme Section Overrides) */
