@@ -16,7 +16,7 @@
   --inv-text: #ede7da;
   --inv-muted: #a79e8b;
   --inv-line: rgba(237, 231, 218, 0.14);
-  --gutter: clamp(1rem, 5vw, 2.5rem);
+  --gutter: clamp(0.875rem, 5vw, 2.5rem);
 }
 
 @theme inline {
@@ -322,8 +322,8 @@ html.js [data-reveal].is-in {
   display: none; /* Chrome/Safari */
 }
 
-/* Snapping only on screen widths >= 1024px AND heights >= 600px */
-@media (min-width: 1024px) and (min-height: 600px) {
+/* Snapping only on screen widths >= 1024px AND heights >= 700px */
+@media (min-width: 1024px) and (min-height: 700px) {
   html, body {
     overflow: hidden !important;
     height: 100% !important;
@@ -357,7 +357,7 @@ html.js [data-reveal].is-in {
 }
 
 /* Fallback for short screens or mobile/tablets */
-@media (max-width: 1023px), (max-height: 599px) {
+@media (max-width: 1023px), (max-height: 699px) {
   #snap-container {
     scroll-snap-type: none;
     height: auto;
@@ -370,7 +370,7 @@ html.js [data-reveal].is-in {
 }
 
 /* Staggered mechanical horizontal and vertical transitions (no opacity fades) for snap viewports */
-@media (min-width: 1024px) and (min-height: 600px) {
+@media (min-width: 1024px) and (min-height: 700px) {
   
   /* 1. SLIDE DOWN (Indices and Kickers) */
   .section-snap-wrap .sec-num,
@@ -495,4 +495,124 @@ html.js [data-reveal].is-in {
     display: none !important;
     animation: none !important;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Scanline sweep — camera/sensor aesthetic on the Demo canvas          */
+/* ------------------------------------------------------------------ */
+@keyframes scanline {
+  0%   { transform: translateY(-100%); opacity: 0.18; }
+  8%   { opacity: 0.18; }
+  92%  { opacity: 0.18; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.scanline-sweep {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.scanline-sweep::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(191, 71, 34, 0.35) 20%,
+    rgba(191, 71, 34, 0.55) 50%,
+    rgba(191, 71, 34, 0.35) 80%,
+    transparent 100%
+  );
+  animation: scanline 4.2s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scanline-sweep::after {
+    animation: none;
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Cursor glow — desktop only, pointer devices only                     */
+/* ------------------------------------------------------------------ */
+#cursor-glow {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(191, 71, 34, 0.07) 0%,
+    rgba(191, 71, 34, 0.03) 40%,
+    transparent 70%
+  );
+  transform: translate(-50%, -50%);
+  transition: opacity 0.4s ease;
+  will-change: left, top;
+}
+
+@media (hover: none), (pointer: coarse) {
+  #cursor-glow {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile-first layout patches                                          */
+/* ------------------------------------------------------------------ */
+
+/* Prevent any horizontal overflow on mobile */
+body {
+  overflow-x: hidden;
+}
+
+/* Section snap wraps: tighter top padding on mobile */
+@media (max-width: 639px) {
+  .section-snap-wrap {
+    padding-top: 5rem !important;  /* was pt-24 = 6rem */
+    padding-bottom: 2rem !important;
+  }
+}
+
+/* CtaBand CTA buttons: stack vertically on small screens */
+@media (max-width: 479px) {
+  .cta-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .cta-actions > button,
+  .cta-actions > a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Demo canvas responsive aspect ratio */
+.demo-canvas-ratio {
+  aspect-ratio: 1000 / 560;
+}
+
+@media (max-width: 639px) {
+  .demo-canvas-ratio {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* xs utility (screens < 480px) — used in Hero CTA stacking */
+@media (min-width: 480px) {
+  .xs\:flex-row { flex-direction: row; }
+  .xs\:w-auto   { width: auto; }
+  .xs\:items-center { align-items: center; }
+  .xs\:justify-start { justify-content: flex-start; }
 }

@@ -15,6 +15,7 @@ import { CtaBand, SiteFooter } from "@/components/CtaBand";
 import { ContactModal } from "@/components/ui/ContactModal";
 import { KeyboardScrollHandler } from "@/components/KeyboardScrollHandler";
 import { PageScrollerDots } from "@/components/PageScrollerDots";
+import { CursorGlow } from "@/components/CursorGlow";
 
 export default function Home() {
   const [isContactOpen, setIsContactOpen] = useState(false);
@@ -27,11 +28,12 @@ export default function Home() {
 
   return (
     <>
+      <CursorGlow />
       <SiteNav onOpenContact={() => handleOpenContact("FUND_PROTOTYPE")} />
       
       <main
         id="snap-container"
-        className="w-full flex-1 flex flex-col lg:h-screen lg:overflow-y-auto lg:snap-y lg:snap-mandatory scroll-smooth scrollbar-none snap-y select-none relative"
+        className="w-full flex-1 flex flex-col lg:h-screen lg:overflow-y-auto lg:snap-y lg:snap-mandatory scroll-smooth scrollbar-none snap-y select-none relative overflow-x-hidden"
       >
         <KeyboardScrollHandler />
         <PageScrollerDots />

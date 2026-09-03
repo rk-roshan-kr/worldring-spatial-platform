@@ -17,11 +17,7 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
         const base = apiUrl.endsWith("/api") ? apiUrl.slice(0, -4) : apiUrl;
         const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(1500) });
-        if (res.ok) {
-          setConnected(true);
-        } else {
-          setConnected(false);
-        }
+        setConnected(res.ok);
       } catch {
         setConnected(false);
       }
@@ -64,9 +60,9 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
           if (e.isIntersecting) setActive(`#${e.target.id}`);
         }
       },
-      { 
+      {
         root: container,
-        rootMargin: "-30% 0px -50% 0px" 
+        rootMargin: "-30% 0px -50% 0px",
       }
     );
     sections.forEach((s) => io.observe(s));
@@ -84,84 +80,138 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
     };
   }, [open]);
 
+  // Close menu on resize to desktop
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 1024) setOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 border-b ${
-        scrolled ? "border-line" : "border-transparent"
-      } bg-paper/90 backdrop-blur-md transition-colors duration-200`}
-    >
-      <div className="mx-auto max-w-[76rem] px-(--gutter) py-3.5 flex items-center justify-between gap-6">
-        <a href="#top" className="flex items-baseline gap-2.5 no-underline whitespace-nowrap">
-          <span className="font-serif text-[1.28rem] font-semibold tracking-tight text-ink">
-            {SITE.brandName}
-          </span>
-          <span className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-muted border-l border-line-strong pl-2 py-0.5 ml-1">
-            {SITE.stageTag}
-          </span>
-          <span className="flex items-center gap-1.5 border-l border-line-strong pl-2.5 py-0.5 ml-1 select-none">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${connected ? "bg-green-500" : "bg-amber-500"}`}></span>
-              <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${connected ? "bg-green-500" : "bg-amber-500"}`}></span>
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 border-b ${
+          scrolled ? "border-line" : "border-transparent"
+        } bg-paper/90 backdrop-blur-md transition-colors duration-200`}
+      >
+        <div className="mx-auto max-w-[76rem] px-(--gutter) py-3 flex items-center justify-between gap-4">
+          {/* Brand */}
+          <a href="#top" className="flex items-center gap-2 no-underline shrink-0">
+            <span className="font-serif text-[1.2rem] sm:text-[1.28rem] font-semibold tracking-tight text-ink whitespace-nowrap">
+              {SITE.brandName}
             </span>
-            <span className="font-mono text-[0.55rem] uppercase tracking-wider font-semibold text-muted hidden sm:inline">
-              {connected ? "SANDBOX: LIVE" : "SANDBOX: OFFLINE"}
+            <span className="hidden md:inline font-mono text-[0.62rem] uppercase tracking-[0.14em] text-muted border-l border-line-strong pl-2 py-0.5 ml-0.5 whitespace-nowrap">
+              {SITE.stageTag}
             </span>
-          </span>
-        </a>
+            <span className="flex items-center gap-1.5 border-l border-line-strong pl-2.5 py-0.5 ml-0.5 select-none">
+              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${connected ? "bg-green-500" : "bg-amber-500"}`} />
+                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${connected ? "bg-green-500" : "bg-amber-500"}`} />
+              </span>
+              <span className="hidden sm:inline font-mono text-[0.55rem] uppercase tracking-wider font-semibold text-muted whitespace-nowrap">
+                {connected ? "LIVE" : "OFFLINE"}
+              </span>
+            </span>
+          </a>
 
-        <nav aria-label="Primary">
-          <button
-            type="button"
-            className="lg:hidden font-mono text-[0.75rem] border border-line-strong px-3.5 py-2 cursor-pointer transition-colors hover:border-accent-deep hover:text-accent-deep"
-            aria-expanded={open}
-            aria-controls="nav-links"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-          >
-            {open ? "Close" : "Menu"}
-          </button>
-          <ul
-            ref={navRef}
-            id="nav-links"
-            className={`${
-              open ? "flex opacity-100 translate-y-0 pointer-events-auto" : "hidden lg:flex"
-            } lg:opacity-100 lg:translate-y-0 lg:pointer-events-auto absolute lg:static top-full inset-x-0 flex-col lg:flex-row items-stretch lg:items-center gap-0 lg:gap-[clamp(1rem,2vw,1.9rem)] bg-paper border-b border-line lg:border-0 px-(--gutter) lg:p-0 m-0 p-2 pb-4 lg:m-0 list-none transition-all duration-200 ease-out ${
-              open ? "" : "opacity-0 -translate-y-1 pointer-events-none"
-            }`}
-            style={open ? { maxHeight: "calc(100vh - 4rem)", overflow: "auto" } : undefined}
-          >
+          {/* Desktop nav */}
+          <nav aria-label="Primary" className="hidden lg:flex items-center gap-[clamp(0.75rem,1.5vw,1.6rem)]">
             {SITE.nav.map((item) => (
-              <li key={item.href} className="lg:contents w-full lg:w-auto">
-                <a
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={active === item.href ? "true" : undefined}
-                  className={`block lg:inline py-2.5 lg:py-0 border-t border-line lg:border-0 font-mono text-[0.74rem] uppercase tracking-wider no-underline transition-colors hover:text-accent-deep ${
-                    active === item.href ? "text-accent-deep font-semibold" : "text-body-text"
-                  }`}
-                >
-                  {item.label}
-                </a>
-              </li>
+              <a
+                key={item.href}
+                href={item.href}
+                aria-current={active === item.href ? "true" : undefined}
+                className={`font-mono text-[0.72rem] uppercase tracking-wider no-underline transition-colors hover:text-accent-deep ${
+                  active === item.href ? "text-accent-deep font-semibold" : "text-body-text"
+                }`}
+              >
+                {item.label}
+              </a>
             ))}
-          </ul>
-        </nav>
+          </nav>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/capture"
-            className="btn btn-ghost !py-2.5 hidden md:inline-flex border border-line-strong font-mono text-[0.74rem] uppercase tracking-wider text-muted hover:border-accent-deep hover:text-accent-deep transition-colors"
-          >
-            Launch 3D Sim
-          </Link>
-          <button
-            onClick={onOpenContact}
-            className="btn btn-solid !py-2.5 hidden sm:inline-flex cursor-pointer"
-          >
-            Get in touch
-          </button>
+          {/* Desktop CTAs */}
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
+            <Link
+              href="/capture"
+              className="btn btn-ghost !py-2 border border-line-strong font-mono text-[0.72rem] uppercase tracking-wider text-muted hover:border-accent-deep hover:text-accent-deep transition-colors whitespace-nowrap"
+            >
+              Launch 3D Sim
+            </Link>
+            <button
+              onClick={onOpenContact}
+              className="btn btn-solid !py-2 cursor-pointer whitespace-nowrap"
+            >
+              Get in touch
+            </button>
+          </div>
+
+          {/* Mobile right side */}
+          <div className="flex lg:hidden items-center gap-2.5">
+            <button
+              onClick={onOpenContact}
+              className="hidden sm:inline-flex btn btn-solid !py-2 !px-3 cursor-pointer text-[0.72rem] whitespace-nowrap"
+            >
+              Get in touch
+            </button>
+            <button
+              type="button"
+              className="font-mono text-[0.72rem] border border-line-strong px-3 py-2 cursor-pointer transition-colors hover:border-accent-deep hover:text-accent-deep"
+              aria-expanded={open}
+              aria-controls="mobile-nav"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Close navigation" : "Open navigation"}
+            >
+              {open ? "Close" : "Menu"}
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Mobile menu overlay */}
+      {open && (
+        <div
+          id="mobile-nav"
+          className="fixed inset-0 z-40 bg-paper flex flex-col pt-[3.75rem] lg:hidden"
+          role="dialog"
+          aria-label="Navigation"
+        >
+          <nav className="flex-1 flex flex-col overflow-y-auto px-(--gutter) py-6 gap-0">
+            {SITE.nav.map((item, i) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                aria-current={active === item.href ? "true" : undefined}
+                className={`flex items-center justify-between py-4 border-b border-line font-mono text-[0.8rem] uppercase tracking-[0.14em] no-underline transition-colors ${
+                  active === item.href ? "text-accent-deep" : "text-body-text"
+                }`}
+                style={{ animationDelay: `${i * 40}ms` }}
+              >
+                <span>{item.label}</span>
+                <span className="text-faint text-[0.65rem]">{`0${i + 1}`}</span>
+              </a>
+            ))}
+          </nav>
+          <div className="px-(--gutter) py-5 border-t border-line flex flex-col gap-3">
+            <Link
+              href="/capture"
+              onClick={() => setOpen(false)}
+              className="btn btn-ghost w-full justify-center border border-line-strong font-mono text-[0.75rem] uppercase tracking-wider"
+            >
+              Launch 3D Simulation
+            </Link>
+            <button
+              onClick={() => { setOpen(false); onOpenContact?.(); }}
+              className="btn btn-solid w-full justify-center cursor-pointer"
+            >
+              Get in touch
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

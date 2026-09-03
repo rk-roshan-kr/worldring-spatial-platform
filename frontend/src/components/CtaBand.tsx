@@ -21,7 +21,7 @@ export function CtaBand({ onOpenContact }: { onOpenContact?: (mode?: string) => 
         </Reveal>
 
         <Reveal>
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
+          <div className="cta-actions flex flex-wrap items-center justify-center gap-3 mt-10">
             <button
               onClick={() => onOpenContact?.("FUND_PROTOTYPE")}
               className="px-6 py-3.5 rounded bg-accent hover:bg-accent-deep text-white font-mono text-[0.78rem] uppercase tracking-[0.14em] font-bold shadow-md transition-colors cursor-pointer"
@@ -51,7 +51,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-line py-8 lg:py-6 bg-paper">
-      <div className="mx-auto max-w-[76rem] px-(--gutter) grid md:grid-cols-[1.6fr_1fr_1.4fr] gap-10 items-start">
+      <div className="mx-auto max-w-[76rem] px-(--gutter) grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1.4fr] gap-8 md:gap-10 items-start">
         <div>
           <p className="font-serif text-[1.15rem] font-semibold m-0 mb-2 text-ink">{SITE.brandName}</p>
           <p className="text-[0.88rem] text-muted m-0 max-w-[38ch]">

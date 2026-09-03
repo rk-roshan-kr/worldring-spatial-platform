@@ -1386,7 +1386,9 @@ export function DemoSection() {
     <Section id="demo" num="05 — The demo" title={SITE.demo.heading} intro={SITE.demo.intro}>
       <Reveal>
         <div className="rounded-sm border border-line bg-paper p-[clamp(0.75rem,2vw,1.5rem)]">
-          <div ref={plateRef} className="relative overflow-hidden rounded-sm border border-line bg-[#f1ece1] shadow-[0_14px_30px_-22px_rgba(27,23,18,0.45)]" style={{ aspectRatio: "1000 / 560" }}>
+          <div ref={plateRef} className="relative overflow-hidden rounded-sm border border-line bg-[#f1ece1] shadow-[0_14px_30px_-22px_rgba(27,23,18,0.45)] demo-canvas-ratio">
+            {/* Scanline sweep — camera/sensor aesthetic */}
+            <div className="scanline-sweep" aria-hidden="true" />
             <svg viewBox={`0 0 ${W} ${H}`} className="block h-full w-full" role="img" aria-label="One continuous take from a drone survey to a route on a phone">
               <defs>
                 <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
