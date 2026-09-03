@@ -4,17 +4,17 @@ import { useEffect, useRef } from "react";
 
 // ─── Design Tokens & Physics Config ──────────────────────────────────────────
 const N_THREADS   = 100;       // number of super long threads forming the ring
-const N_SEGS      = 36;        // 36 control particles per thread for ultra-fluid, endless curves
-const ARC_SPAN    = Math.PI * 3.8; // each super long thread wraps nearly 2 FULL TURNS (684°) around the ring!
+const N_SEGS      = 36;        // 36 control particles per thread
+const ARC_SPAN    = Math.PI * 3.8; // super long threads wrapping 684°
 const RING_FRAC   = 0.36;      // radius as fraction of min(W, H)
 
 // Physics Constants
 const K_HOME      = 0.09;      // spring force pulling particles back to ring home
 const K_LINK      = 0.42;      // strong link spring along the super long fiber
-const DAMPING     = 0.75;      // velocity damping per frame for elastic snapback
+const DAMPING     = 0.75;      // velocity damping per frame
 
 // Drag & Hook Physics
-const HOOK_RADIUS = 55;        // radius to snag/hook super long threads with cursor (px)
+const HOOK_RADIUS = 55;        // radius to snag/hook threads with cursor (px)
 const MAX_HOOKS   = 16;        // max threads hooked simultaneously
 
 // Color: Terracotta Red matching favicon (#bf4722)
@@ -27,8 +27,8 @@ interface Pt {
   vy: number;
   hx: number; // Target home X on ring
   hy: number; // Target home Y on ring
-  sx: number; // Start X for intro
-  sy: number; // Start Y for intro
+  sx: number; // Non-radial start X (parallel lines)
+  sy: number; // Non-radial start Y (parallel lines)
 }
 
 interface Thread {
@@ -38,7 +38,7 @@ interface Thread {
   alpha: number;
   phase: number;
   isHooked: boolean;
-  hookPtIdx: number; // particle index snagged by mouse
+  hookPtIdx: number;
 }
 
 export function ThreadRing({ className = "" }: { className?: string }) {
@@ -64,24 +64,25 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
       for (let i = 0; i < N_THREADS; i++) {
         const baseAngle = (i / N_THREADS) * Math.PI * 2;
-        const rOffset = (Math.random() - 0.5) * 18; // rich layered ring texture offset
+        const rOffset = (Math.random() - 0.5) * 18;
         const threadRadius = R + rOffset;
 
-        const flyAngle = baseAngle + (Math.random() - 0.5) * 0.5;
-        const flyDist = Math.max(W, H) * (0.7 + Math.random() * 0.3);
+        // NON-RADIAL START: Long straight parallel lines spanning horizontally across the canvas
+        // Each thread starts as a straight line at Y position distributed vertically
+        const startY = cy + (i / N_THREADS - 0.5) * H * 1.4;
 
         const pts: Pt[] = [];
         for (let s = 0; s < N_SEGS; s++) {
           const t = s / (N_SEGS - 1);
-          // Super long thread wrapping nearly 2 full turns (684 degrees) around the ring
           const angle = baseAngle + (t - 0.5) * ARC_SPAN;
 
+          // Target home position on the ring
           const hx = cx + threadRadius * Math.cos(angle);
           const hy = cy + threadRadius * Math.sin(angle);
 
-          // Straight vector fly-in for intro
-          const sx = cx + Math.cos(flyAngle) * flyDist + (t - 0.5) * 220 * Math.cos(flyAngle + Math.PI / 2);
-          const sy = cy + Math.sin(flyAngle) * flyDist + (t - 0.5) * 220 * Math.sin(flyAngle + Math.PI / 2);
+          // Non-radial start position: straight horizontal line passing across canvas
+          const sx = cx + (t - 0.5) * W * 1.6;
+          const sy = startY + (Math.random() - 0.5) * 10;
 
           pts.push({
             x: sx,
@@ -97,7 +98,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
         threads.push({
           pts,
-          delay: (i / N_THREADS) * 900,
+          delay: (i / N_THREADS) * 800,
           lw: 0.5 + Math.random() * 1.1,
           alpha: 0.35 + Math.random() * 0.45,
           phase: Math.random() * Math.PI * 2,
@@ -196,6 +197,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
             const targetX = p.hx + Math.cos(angle) * breath;
             const targetY = p.hy + Math.sin(angle) * breath;
 
+            // Lerp target from parallel start line to ring target
             const currentTargetX = p.sx + (targetX - p.sx) * easeIntro;
             const currentTargetY = p.sy + (targetY - p.sy) * easeIntro;
 
@@ -289,7 +291,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Interactive red thread circle with super long continuous fibers — click or hover to pull threads apart"
+      aria-label="Interactive red thread circle formed from non-radial parallel threads"
       role="img"
     />
   );
