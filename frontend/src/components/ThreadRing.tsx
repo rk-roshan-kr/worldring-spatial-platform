@@ -12,11 +12,13 @@ const RING_FRAC   = 0.35;      // ring radius fraction
 const K_HOME      = 0.05;      // home spring force
 const K_LINK      = 0.12;      // neighbor link spring force
 const DAMPING     = 0.84;      // smooth damping
-const MAX_SPEED   = 10;        // hard speed cap (px/frame) to prevent whipping
+const MAX_SPEED   = 12;        // hard speed cap (px/frame) to prevent whipping
 
-// Drag & Grab (Click and Hold Only)
+// Drag, Grab & Break Thresholds
 const HOOK_RADIUS = 50;        // grab radius around cursor (px)
 const MAX_HOOKS   = 14;        // max threads grabbed simultaneously
+const BREAK_DIST  = 165;       // max stretch distance (px) before thread snaps & breaks free!
+const REPAIR_MS   = 1200;      // ms for a snapped thread to recoil and re-knit back into the ring
 
 // Color: Terracotta Red matching favicon (#bf4722)
 const ACC_R = 191, ACC_G = 71, ACC_B = 34;
@@ -40,6 +42,8 @@ interface Thread {
   phase: number;
   isHooked: boolean;
   hookPtIdx: number;
+  isBroken: boolean;
+  breakTime: number;
 }
 
 export function ThreadRing({ className = "" }: { className?: string }) {
@@ -103,6 +107,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           phase: Math.random() * Math.PI * 2,
           isHooked: false,
           hookPtIdx: Math.floor(N_SEGS / 2),
+          isBroken: false,
+          breakTime: 0,
         });
       }
 
@@ -126,10 +132,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       build();
     };
 
-    // Update thread grab state — ONLY grab when user is actively clicking and holding (isPointerDown)
-    const updateHooks = () => {
+    // Update thread grab state (only when pointer is down & thread is not broken)
+    const updateHooks = (now: number) => {
       if (!isPointerDown || mx < -500 || my < -500) {
-        // Release all grabbed threads if not holding mouse down
         for (const th of threads) th.isHooked = false;
         return;
       }
@@ -137,10 +142,15 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       let activeHookCount = 0;
       for (const th of threads) {
         if (th.isHooked) activeHookCount++;
+        // Check if broken thread is ready to re-knit
+        if (th.isBroken && now - th.breakTime > REPAIR_MS) {
+          th.isBroken = false;
+        }
       }
 
       for (let i = 0; i < threads.length; i++) {
         const th = threads[i];
+        if (th.isBroken) continue; // Skip broken threads until re-knitted
 
         let minDist = Infinity;
         let nearestPtIdx = Math.floor(N_SEGS / 2);
@@ -155,7 +165,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           }
         }
 
-        // Only grab threads near cursor while mouse button is held down
         if (minDist < HOOK_RADIUS) {
           if (!th.isHooked && activeHookCount < MAX_HOOKS) {
             th.isHooked = true;
@@ -171,7 +180,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ctx.clearRect(0, 0, W, H);
 
       const elapsed = now - t0;
-      updateHooks();
+      updateHooks(now);
 
       for (let i = 0; i < threads.length; i++) {
         const th = threads[i];
@@ -184,11 +193,32 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         const breath = Math.sin(now * 0.0008 + th.phase) * 1.2 * easeIntro;
         const N = th.pts.length;
 
+        // Check for thread snapping/breaking if stretched past BREAK_DIST
+        if (th.isHooked && mx > -500) {
+          const p = th.pts[th.hookPtIdx];
+          const stretchDist = Math.hypot(mx - p.hx, my - p.hy);
+
+          if (stretchDist > BREAK_DIST) {
+            // SNAP! Thread breaks free from cursor with elastic recoil impulse
+            th.isHooked = false;
+            th.isBroken = true;
+            th.breakTime = now;
+
+            // Give particles a recoil impulse back toward home ring
+            for (let s = 0; s < N; s++) {
+              const pt = th.pts[s];
+              const recoilX = (pt.hx - pt.x) * 0.18;
+              const recoilY = (pt.hy - pt.y) * 0.18;
+              pt.vx += recoilX;
+              pt.vy += recoilY;
+            }
+          }
+        }
+
         for (let s = 0; s < N; s++) {
           const p = th.pts[s];
 
           if (th.isHooked && s === th.hookPtIdx && isPointerDown && mx > -500) {
-            // Pin grabbed particle directly to cursor position while holding click
             p.x = mx;
             p.y = my;
             p.vx = 0;
@@ -304,7 +334,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Interactive red thread circle — click and hold to grab and pull threads apart"
+      aria-label="Interactive red thread circle — click and hold to pull threads; threads snap if pulled too far"
       role="img"
     />
   );
