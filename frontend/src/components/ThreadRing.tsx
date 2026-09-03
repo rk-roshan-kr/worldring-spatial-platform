@@ -3,19 +3,19 @@
 import { useEffect, useRef } from "react";
 
 // ─── Design Tokens & Physics Config ──────────────────────────────────────────
-const N_THREADS   = 220;       // number of threads forming the ring
-const N_SEGS      = 8;         // particles per thread for smooth bezier curves
-const ARC_SPAN    = Math.PI / 5; // arc length of each thread segment (~36°)
+const N_THREADS   = 100;       // number of super long threads forming the ring
+const N_SEGS      = 36;        // 36 control particles per thread for ultra-fluid, endless curves
+const ARC_SPAN    = Math.PI * 3.8; // each super long thread wraps nearly 2 FULL TURNS (684°) around the ring!
 const RING_FRAC   = 0.36;      // radius as fraction of min(W, H)
 
 // Physics Constants
-const K_HOME      = 0.12;      // spring force pulling particles back to ring home
-const K_LINK      = 0.35;      // spring force connecting neighboring particles in a thread
-const DAMPING     = 0.78;      // velocity damping per frame for snappy return
+const K_HOME      = 0.09;      // spring force pulling particles back to ring home
+const K_LINK      = 0.42;      // strong link spring along the super long fiber
+const DAMPING     = 0.75;      // velocity damping per frame for elastic snapback
 
 // Drag & Hook Physics
-const HOOK_RADIUS = 40;        // radius to snag/hook threads with mouse (px)
-const MAX_HOOKS   = 25;        // max threads hooked simultaneously
+const HOOK_RADIUS = 55;        // radius to snag/hook super long threads with cursor (px)
+const MAX_HOOKS   = 16;        // max threads hooked simultaneously
 
 // Color: Terracotta Red matching favicon (#bf4722)
 const ACC_R = 191, ACC_G = 71, ACC_B = 34;
@@ -38,7 +38,7 @@ interface Thread {
   alpha: number;
   phase: number;
   isHooked: boolean;
-  hookPtIdx: number; // which particle index in this thread is snagged
+  hookPtIdx: number; // particle index snagged by mouse
 }
 
 export function ThreadRing({ className = "" }: { className?: string }) {
@@ -64,22 +64,24 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
       for (let i = 0; i < N_THREADS; i++) {
         const baseAngle = (i / N_THREADS) * Math.PI * 2;
-        const rOffset = (Math.random() - 0.5) * 14; // fibrous ring texture
+        const rOffset = (Math.random() - 0.5) * 18; // rich layered ring texture offset
         const threadRadius = R + rOffset;
 
-        const flyAngle = baseAngle + (Math.random() - 0.5) * 0.4;
-        const flyDist = Math.max(W, H) * (0.6 + Math.random() * 0.4);
+        const flyAngle = baseAngle + (Math.random() - 0.5) * 0.5;
+        const flyDist = Math.max(W, H) * (0.7 + Math.random() * 0.3);
 
         const pts: Pt[] = [];
         for (let s = 0; s < N_SEGS; s++) {
           const t = s / (N_SEGS - 1);
+          // Super long thread wrapping nearly 2 full turns (684 degrees) around the ring
           const angle = baseAngle + (t - 0.5) * ARC_SPAN;
 
           const hx = cx + threadRadius * Math.cos(angle);
           const hy = cy + threadRadius * Math.sin(angle);
 
-          const sx = cx + Math.cos(flyAngle) * flyDist + (t - 0.5) * 100 * Math.cos(flyAngle + Math.PI / 2);
-          const sy = cy + Math.sin(flyAngle) * flyDist + (t - 0.5) * 100 * Math.sin(flyAngle + Math.PI / 2);
+          // Straight vector fly-in for intro
+          const sx = cx + Math.cos(flyAngle) * flyDist + (t - 0.5) * 220 * Math.cos(flyAngle + Math.PI / 2);
+          const sy = cy + Math.sin(flyAngle) * flyDist + (t - 0.5) * 220 * Math.sin(flyAngle + Math.PI / 2);
 
           pts.push({
             x: sx,
@@ -95,8 +97,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
         threads.push({
           pts,
-          delay: (i / N_THREADS) * 800,
-          lw: 0.6 + Math.random() * 1.1,
+          delay: (i / N_THREADS) * 900,
+          lw: 0.5 + Math.random() * 1.1,
           alpha: 0.35 + Math.random() * 0.45,
           phase: Math.random() * Math.PI * 2,
           isHooked: false,
@@ -124,10 +126,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       build();
     };
 
-    // Update thread hooks based on mouse proximity / drag
     const updateHooks = () => {
       if (mx < -500 || my < -500) {
-        // Mouse outside canvas -> release all hooks
         for (const th of threads) th.isHooked = false;
         return;
       }
@@ -140,22 +140,26 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       for (let i = 0; i < threads.length; i++) {
         const th = threads[i];
 
-        // Check distance from mouse to middle particle of thread
-        const midIdx = Math.floor(th.pts.length / 2);
-        const pMid = th.pts[midIdx];
-        const dx = pMid.x - mx;
-        const dy = pMid.y - my;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        let minDist = Infinity;
+        let nearestPtIdx = Math.floor(N_SEGS / 2);
 
-        // Snag thread if pointer is down OR cursor is within hook radius
-        if ((isPointerDown && dist < HOOK_RADIUS * 1.5) || dist < HOOK_RADIUS) {
+        for (let s = 0; s < N_SEGS; s++) {
+          const dx = th.pts[s].x - mx;
+          const dy = th.pts[s].y - my;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestPtIdx = s;
+          }
+        }
+
+        if ((isPointerDown && minDist < HOOK_RADIUS * 1.6) || minDist < HOOK_RADIUS) {
           if (!th.isHooked && activeHookCount < MAX_HOOKS) {
             th.isHooked = true;
-            th.hookPtIdx = midIdx;
+            th.hookPtIdx = nearestPtIdx;
             activeHookCount++;
           }
-        } else if (!isPointerDown && dist > HOOK_RADIUS * 2.5) {
-          // Release thread if cursor moves far away and not dragging
+        } else if (!isPointerDown && minDist > HOOK_RADIUS * 2.8) {
           th.isHooked = false;
         }
       }
@@ -171,7 +175,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       for (let i = 0; i < threads.length; i++) {
         const th = threads[i];
         const localTime = elapsed - th.delay;
-        if (localTime < 0) continue; // Waiting for intro wave
+        if (localTime < 0) continue;
 
         const rawProgress = Math.min(localTime / 1400, 1);
         const easeIntro = 1 - Math.pow(1 - rawProgress, 3);
@@ -183,13 +187,11 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           const p = th.pts[s];
 
           if (th.isHooked && s === th.hookPtIdx && mx > -500) {
-            // Pin snagged particle directly to cursor!
             p.x = mx;
             p.y = my;
             p.vx = 0;
             p.vy = 0;
           } else {
-            // Compute home target with ambient breathing
             const angle = Math.atan2(p.hy - cy, p.hx - cx);
             const targetX = p.hx + Math.cos(angle) * breath;
             const targetY = p.hy + Math.sin(angle) * breath;
@@ -197,11 +199,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
             const currentTargetX = p.sx + (targetX - p.sx) * easeIntro;
             const currentTargetY = p.sy + (targetY - p.sy) * easeIntro;
 
-            // 1. Spring force to home position
             p.vx += (currentTargetX - p.x) * K_HOME;
             p.vy += (currentTargetY - p.y) * K_HOME;
 
-            // 2. Spring links to neighbor particles in same thread
             if (s > 0) {
               const prev = th.pts[s - 1];
               p.vx += (prev.x - p.x) * K_LINK;
@@ -220,10 +220,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           }
         }
 
-        // Draw thread line
         const opacity = th.alpha * Math.min(rawProgress * 1.5, 1);
         ctx.strokeStyle = `rgba(${ACC_R},${ACC_G},${ACC_B},${opacity.toFixed(3)})`;
-        ctx.lineWidth = th.isHooked ? th.lw * 1.4 : th.lw;
+        ctx.lineWidth = th.isHooked ? th.lw * 1.5 : th.lw;
         ctx.lineCap = "round";
 
         ctx.beginPath();
@@ -256,7 +255,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     };
     const onPointerUp = () => {
       isPointerDown = false;
-      // Release all hooked threads on pointer release so they snap back
       for (const th of threads) th.isHooked = false;
     };
     const onPointerLeave = () => {
@@ -291,7 +289,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Interactive red thread circle — click or hover to pull threads apart"
+      aria-label="Interactive red thread circle with super long continuous fibers — click or hover to pull threads apart"
       role="img"
     />
   );
