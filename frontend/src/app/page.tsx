@@ -39,57 +39,57 @@ export default function Home() {
         <PageScrollerDots />
 
         {/* 01 — The World & 30-Second Vision Breakdown */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <Hero onOpenContact={handleOpenContact} />
         </div>
 
         {/* 02 — The Gap (Address vs Visual Reality) */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <GapSection />
         </div>
 
         {/* 03 — The Thesis & Pipeline Architecture */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <PipelineSection />
         </div>
 
         {/* 04 — The Wow Moment & Field Experiment (Continuous Take Demo) */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <DemoSection />
         </div>
 
         {/* 05 — Infrastructure (Dual Extraction Streams) */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <DirectionsSection />
         </div>
 
         {/* 06 — Data Wing (Physical AI Infrastructure) */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <DataWingSection />
         </div>
 
         {/* 07 — What We Are Proving (Core Hypotheses & Chandigarh Sector Trial) */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <StatusSection />
         </div>
 
         {/* 08 — Capital Ask & Milestone Allocation */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <RoadmapSection onOpenContact={handleOpenContact} />
         </div>
 
         {/* 09 — Founder Story & Thesis Purpose */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <FounderSection />
         </div>
 
         {/* 10 — The Final Screen & Investor Actions */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-b border-line pt-24 lg:pt-28 pb-8 lg:pb-12">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <CtaBand onOpenContact={handleOpenContact} />
         </div>
 
         {/* 11 — Footer */}
-        <div className="section-snap-wrap w-full shrink-0 relative border-t border-line py-12 lg:py-16">
+        <div className="section-snap-wrap w-full shrink-0 relative">
           <SiteFooter />
         </div>
       </main>
