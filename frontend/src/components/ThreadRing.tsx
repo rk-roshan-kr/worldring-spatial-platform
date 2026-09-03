@@ -101,7 +101,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         stageDelayMs: number,
         alpha: number = 0.65,
         lw: number = 0.95,
-        subdivide: number = 26
+        subdivide: number = 32
       ) => {
         const projPts = geoPts
           .map((g) => projectGeo(g.lon, g.lat))
@@ -223,87 +223,76 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       // ── STAGE 2 (1200ms - 2400ms): Official Undivided Sovereign Boundary of India ─
       const STAGE_2_DELAY = 1200;
 
-      // Single, Continuous, Pristine Sovereign Outer Boundary of India
-      // Fully encompasses Jammu, Kashmir, Gilgit-Baltistan, Karakoram, Siachen, Ladakh & Aksai Chin as ONE UNDIVIDED MAP
+      // Pure Clockwise Simple Polygon — Sweeping Majestic Dome Crown for J&K & Ladakh
+      // Zero self-intersections, zero loops, zero twists at the neck!
       const sovereignIndiaBoundary = [
-        { lon: 68.2, lat: 23.7 }, // Kutch, Gujarat
-        { lon: 69.5, lat: 22.8 }, // Kathiawar
-        { lon: 70.4, lat: 21.6 }, // Diu
-        { lon: 72.8, lat: 21.2 }, // Khambhat
-        { lon: 72.8, lat: 19.0 }, // Mumbai
+        { lon: 68.5, lat: 23.7 }, // Kutch, Gujarat
+        { lon: 69.8, lat: 22.5 }, // Kathiawar West
+        { lon: 72.8, lat: 21.0 }, // Khambhat
+        { lon: 72.8, lat: 19.0 }, // Mumbai / Konkan
         { lon: 73.8, lat: 15.4 }, // Goa
-        { lon: 74.8, lat: 12.8 }, // Mangalore
-        { lon: 75.8, lat: 11.2 }, // Malabar
-        { lon: 76.5, lat: 9.5 },  // Kochi
-        { lon: 77.5, lat: 8.1 },  // Kanyakumari Tip
-        { lon: 78.2, lat: 8.8 },  // Tirunelveli
-        { lon: 79.8, lat: 10.3 }, // Point Calimere
-        { lon: 80.3, lat: 13.1 }, // Chennai
-        { lon: 80.8, lat: 15.8 }, // Nellore
-        { lon: 82.2, lat: 16.9 }, // AP Coast
-        { lon: 83.3, lat: 17.7 }, // Visakhapatnam
-        { lon: 85.0, lat: 19.3 }, // Odisha Coast
-        { lon: 86.8, lat: 21.0 }, // Balasore
-        { lon: 88.2, lat: 21.6 }, // Sundarbans
-        { lon: 91.8, lat: 22.3 }, // Tripura
-        { lon: 92.5, lat: 25.0 }, // Meghalaya
-        { lon: 95.5, lat: 27.8 }, // Arunachal Pradesh East Tip (Kibithu)
-        { lon: 91.5, lat: 27.8 }, // Bhutan / Arunachal Border
-        { lon: 88.6, lat: 27.3 }, // Sikkim / Kanchenjunga
-        { lon: 85.3, lat: 27.7 }, // Nepal Border
-        { lon: 81.0, lat: 30.0 }, // Uttarakhand Border
-        { lon: 77.0, lat: 31.8 }, // Himachal Pradesh
-        // ── UNIFIED UNDIVIDED CROWN (Jammu, Kashmir, Gilgit & Ladakh) ──
-        { lon: 75.8, lat: 33.2 }, // Jammu / Banihal Pass
-        { lon: 74.2, lat: 34.0 }, // Punch
-        { lon: 73.6, lat: 34.8 }, // Muzaffarabad / Northern Arc
-        { lon: 74.8, lat: 35.8 }, // Gilgit-Baltistan / Nanga Parbat
-        { lon: 76.5, lat: 35.9 }, // K2 / Karakoram Crest Tip
-        { lon: 77.8, lat: 35.5 }, // Siachen Glacier / Karakoram Pass
-        { lon: 79.5, lat: 35.2 }, // Northern Aksai Chin
-        { lon: 79.5, lat: 33.8 }, // Eastern Aksai Chin / Pangong Tso
-        { lon: 78.8, lat: 32.5 }, // Demchok / Eastern Ladakh
-        { lon: 76.8, lat: 32.0 }, // Lahaul & Spiti Border
-        { lon: 74.0, lat: 31.5 }, // Punjab / Wagah Frontier
-        { lon: 69.8, lat: 26.8 }, // Rajasthan / Thar Desert
-        { lon: 68.2, lat: 23.7 }, // Back to Gujarat (Complete Undivided Loop)
+        { lon: 74.8, lat: 12.8 }, // Mangalore / Canara
+        { lon: 76.5, lat: 9.5 },  // Kochi / Malabar
+        { lon: 77.5, lat: 8.1 },  // Kanyakumari Southernmost Tip
+        { lon: 78.5, lat: 9.5 },  // Coromandel / TN
+        { lon: 80.2, lat: 13.0 }, // Chennai
+        { lon: 82.2, lat: 16.8 }, // Visakhapatnam / AP
+        { lon: 85.0, lat: 19.5 }, // Odisha Coast
+        { lon: 88.0, lat: 21.8 }, // Sundarbans / Bengal
+        { lon: 91.8, lat: 23.0 }, // Tripura / NE Arc
+        { lon: 93.5, lat: 25.5 }, // Manipur / Nagaland
+        { lon: 96.0, lat: 28.0 }, // Arunachal East Tip (Kibithu)
+        { lon: 92.0, lat: 27.8 }, // Bhutan / Arunachal Border
+        { lon: 88.6, lat: 27.5 }, // Sikkim / Kanchenjunga
+        { lon: 85.0, lat: 27.8 }, // Nepal Border
+        { lon: 80.5, lat: 30.0 }, // Uttarakhand (Garhwal)
+        // ── MAJESTIC UNDIVIDED CROWN OF JAMMU, KASHMIR & LADAKH ──
+        { lon: 78.8, lat: 31.8 }, // Himachal East (Kinnaur)
+        { lon: 79.2, lat: 32.8 }, // Spiti / Demchok (South Ladakh)
+        { lon: 79.5, lat: 34.2 }, // Pangong Tso / Eastern Aksai Chin
+        { lon: 79.2, lat: 35.3 }, // Northern Aksai Chin / Depsang
+        { lon: 77.8, lat: 35.7 }, // Karakoram Pass / Siachen Glacier
+        { lon: 76.2, lat: 36.0 }, // K2 / Karakoram Crest (Topmost Point of India)
+        { lon: 74.8, lat: 35.8 }, // Gilgit / Nanga Parbat
+        { lon: 73.5, lat: 34.8 }, // Muzaffarabad / Kashmir West Arc
+        { lon: 74.0, lat: 33.5 }, // Punch / Jammu West
+        { lon: 74.5, lat: 31.8 }, // Punjab / Wagah Border
+        { lon: 71.5, lat: 29.5 }, // Thar Desert North
+        { lon: 70.0, lat: 26.8 }, // Barmer / Rajasthan
+        { lon: 68.5, lat: 23.7 }, // Back to Kutch (Smooth Unbroken Loop)
       ];
 
-      // Layered thread strands following the official UNDIVIDED outer boundary of India
+      // Layered thread strands following the clean non-intersecting outer boundary of India
       for (let offset = -0.6; offset <= 0.6; offset += 0.3) {
         const path = sovereignIndiaBoundary.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.25 }));
-        addGeoThreadPath(path, STAGE_2_DELAY, 0.88, 1.45, 38);
+        addGeoThreadPath(path, STAGE_2_DELAY, 0.88, 1.45, 48);
       }
 
-      // Natural Physical Rivers inside India (No political internal lines!)
-      // Ganga River
+      // Natural Rivers inside India (No political internal lines)
       addGeoThreadPath([
         { lon: 79.0, lat: 31.0 }, { lon: 78.1, lat: 30.0 }, { lon: 79.5, lat: 28.5 },
         { lon: 81.8, lat: 25.4 }, { lon: 85.1, lat: 25.6 }, { lon: 88.0, lat: 24.5 },
         { lon: 89.5, lat: 23.0 }, { lon: 88.3, lat: 21.8 },
-      ], STAGE_2_DELAY + 300, 0.65, 1.0, 24);
+      ], STAGE_2_DELAY + 300, 0.65, 1.0, 24); // Ganga
 
-      // Brahmaputra River
       addGeoThreadPath([
         { lon: 82.0, lat: 30.6 }, { lon: 87.0, lat: 29.2 }, { lon: 95.0, lat: 28.2 },
         { lon: 95.5, lat: 27.5 }, { lon: 91.5, lat: 26.2 }, { lon: 89.8, lat: 25.2 },
-      ], STAGE_2_DELAY + 450, 0.65, 1.0, 24);
+      ], STAGE_2_DELAY + 450, 0.65, 1.0, 24); // Brahmaputra
 
-      // Indus River
       addGeoThreadPath([
         { lon: 81.0, lat: 31.0 }, { lon: 78.5, lat: 33.8 }, { lon: 76.0, lat: 34.5 },
-        { lon: 73.0, lat: 35.5 }, { lon: 71.5, lat: 33.0 }, { lon: 70.0, lat: 28.0 }, { lon: 68.0, lat: 24.0 },
-      ], STAGE_2_DELAY + 600, 0.65, 1.0, 24);
+        { lon: 74.0, lat: 35.5 }, { lon: 71.5, lat: 33.0 }, { lon: 70.0, lat: 28.0 }, { lon: 68.0, lat: 24.0 },
+      ], STAGE_2_DELAY + 600, 0.65, 1.0, 24); // Indus
 
-      // Himalayas Mountain Ridge (Natural Geography, No internal borders)
+      // Himalayas Crest (Sweeps gracefully across Nepal & Northern border without crossing J&K neck)
       const himalayasCrest = [
-        { lon: 71.5, lat: 35.8 }, { lon: 75.5, lat: 34.2 }, { lon: 80.5, lat: 30.2 },
-        { lon: 85.0, lat: 28.2 }, { lon: 88.5, lat: 27.6 }, { lon: 95.0, lat: 28.5 },
+        { lon: 75.0, lat: 34.5 }, { lon: 80.5, lat: 30.2 }, { lon: 88.5, lat: 27.6 }, { lon: 95.0, lat: 28.5 },
       ];
       addGeoThreadPath(himalayasCrest, STAGE_2_DELAY + 750, 0.78, 1.3, 26);
       addGeoThreadPath(himalayasCrest.map(g => ({ lon: g.lon, lat: g.lat - 0.6 })), STAGE_2_DELAY + 850, 0.68, 1.0, 26);
 
-      // Western & Eastern Ghats (Natural Geography)
+      // Ghats
       addGeoThreadPath([
         { lon: 73.2, lat: 20.2 }, { lon: 73.8, lat: 16.5 }, { lon: 75.5, lat: 12.0 }, { lon: 77.0, lat: 8.8 },
       ], STAGE_2_DELAY + 950, 0.68, 1.05, 18);
@@ -658,7 +647,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="2D red thread map of Earth with 100% unified, undivided sovereign boundary of India (Jammu, Kashmir, Gilgit-Baltistan & Ladakh complete) — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into crisp, rock-solid world coastlines. Click and hold to grab and pull threads apart"
+      aria-label="2D red thread map of Earth with sweeping dome crown for Sovereign India (Jammu, Kashmir & Ladakh complete, zero neck self-intersections) — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into rock-solid world coastlines. Click and hold to grab and pull threads apart"
       role="img"
     />
   );
