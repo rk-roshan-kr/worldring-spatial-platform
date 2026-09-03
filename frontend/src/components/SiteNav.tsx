@@ -102,18 +102,6 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
             <span className="font-serif text-[1.2rem] sm:text-[1.28rem] font-semibold tracking-tight text-ink whitespace-nowrap">
               {SITE.brandName}
             </span>
-            <span className="hidden md:inline font-mono text-[0.62rem] uppercase tracking-[0.14em] text-muted border-l border-line-strong pl-2 py-0.5 ml-0.5 whitespace-nowrap">
-              {SITE.stageTag}
-            </span>
-            <span className="flex items-center gap-1.5 border-l border-line-strong pl-2.5 py-0.5 ml-0.5 select-none">
-              <span className="relative flex h-1.5 w-1.5 shrink-0">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${connected ? "bg-green-500" : "bg-amber-500"}`} />
-                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${connected ? "bg-green-500" : "bg-amber-500"}`} />
-              </span>
-              <span className="hidden sm:inline font-mono text-[0.55rem] uppercase tracking-wider font-semibold text-muted whitespace-nowrap">
-                {connected ? "LIVE" : "OFFLINE"}
-              </span>
-            </span>
           </a>
 
           {/* Desktop nav */}
