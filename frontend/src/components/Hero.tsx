@@ -3,7 +3,6 @@
 import { SITE } from "@/config/site";
 import { Reveal } from "@/components/Reveal";
 import { ThreadRing } from "@/components/ThreadRing";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 /** Counts a number from 0 → target over `duration`ms once `trigger` is true */
@@ -108,12 +107,6 @@ export function Hero({ onOpenContact }: { onOpenContact?: (mode?: string) => voi
               >
                 {SITE.hero.primaryCta.label}
               </button>
-              <Link
-                href="/capture"
-                className="btn btn-ghost justify-center sm:justify-start"
-              >
-                Launch Simulation
-              </Link>
             </div>
           </Reveal>
 

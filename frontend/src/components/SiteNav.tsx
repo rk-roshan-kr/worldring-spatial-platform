@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import { SITE } from "@/config/site";
-import Link from "next/link";
 
 export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -122,12 +121,6 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
 
           {/* Desktop CTAs */}
           <div className="hidden lg:flex items-center gap-3 shrink-0">
-            <Link
-              href="/capture"
-              className="btn btn-ghost !py-2 border border-line-strong font-mono text-[0.72rem] uppercase tracking-wider text-muted hover:border-accent-deep hover:text-accent-deep transition-colors whitespace-nowrap"
-            >
-              Launch 3D Sim
-            </Link>
             <button
               onClick={onOpenContact}
               className="btn btn-solid !py-2 cursor-pointer whitespace-nowrap"
@@ -184,13 +177,6 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
             ))}
           </nav>
           <div className="px-(--gutter) py-5 border-t border-line flex flex-col gap-3">
-            <Link
-              href="/capture"
-              onClick={() => setOpen(false)}
-              className="btn btn-ghost w-full justify-center border border-line-strong font-mono text-[0.75rem] uppercase tracking-wider"
-            >
-              Launch 3D Simulation
-            </Link>
             <button
               onClick={() => { setOpen(false); onOpenContact?.(); }}
               className="btn btn-solid w-full justify-center cursor-pointer"
