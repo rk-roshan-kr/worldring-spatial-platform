@@ -6,8 +6,8 @@ import { useEffect, useRef } from "react";
 const RING_FRAC   = 0.38;      // ring radius fraction of min(W, H)
 
 // Drag & Grab
-const HOOK_RADIUS = 40;        // grab radius around cursor (px)
-const MAX_HOOKS   = 16;        // max threads grabbed simultaneously
+const HOOK_RADIUS = 44;        // grab radius around cursor (px)
+const MAX_HOOKS   = 20;        // max threads grabbed simultaneously
 const BREAK_DIST  = 160;       // max stretch before thread snaps
 const REPAIR_MS   = 1200;      // ms to re-knit snapped thread
 
@@ -99,7 +99,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       const addGeoThreadPath = (
         geoPts: { lon: number; lat: number }[],
         stageDelayMs: number,
-        alpha: number = 0.65,
+        alpha: number = 0.68,
         lw: number = 0.95,
         subdivide: number = 32
       ) => {
@@ -162,23 +162,23 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         });
       };
 
-      // ── STAGE 1 (0ms - 1000ms): Outer Emblem Circle Frame ──────────────────
+      // ── STAGE 1 (0ms - 1000ms): Outer Emblem Circle Frame (High Density 70 Strands) ──
       const STAGE_1_DELAY = 0;
-      const N_OUTER = 50;
+      const N_OUTER = 70;
       for (let i = 0; i < N_OUTER; i++) {
         const baseAngle = (i / N_OUTER) * Math.PI * 2;
-        const threadR = R + (Math.random() - 0.5) * 14;
-        const arcSpan = Math.PI * 0.85;
+        const threadR = R + (Math.random() - 0.5) * 16;
+        const arcSpan = Math.PI * 0.9;
 
         const flyAngle = Math.random() * Math.PI * 2;
         const flyDist = Math.max(W, H) * (0.85 + Math.random() * 0.4);
         const startX = cx + Math.cos(flyAngle) * flyDist;
         const startY = cy + Math.sin(flyAngle) * flyDist;
         const lineTangentAngle = flyAngle + Math.PI / 2;
-        const lineLength = 140;
+        const lineLength = 150;
 
         const pts: Pt[] = [];
-        const segs = 18;
+        const segs = 20;
 
         for (let s = 0; s < segs; s++) {
           const t = s / (segs - 1);
@@ -220,11 +220,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         });
       }
 
-      // ── STAGE 2 (1200ms - 2400ms): Official Undivided Sovereign Boundary of India ─
+      // ── STAGE 2 (1200ms - 2400ms): High-Density Sovereign Boundary of India ───────
       const STAGE_2_DELAY = 1200;
 
-      // Pure Clockwise Simple Polygon with Complete High-Detail Northeast India (Seven Sisters & Sikkim)
-      // Zero self-intersections, zero loops!
       const sovereignIndiaBoundary = [
         { lon: 68.5, lat: 23.7 }, // Kutch, Gujarat
         { lon: 69.8, lat: 22.5 }, // Kathiawar West
@@ -239,92 +237,94 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 82.2, lat: 16.8 }, // Visakhapatnam / AP
         { lon: 85.0, lat: 19.5 }, // Odisha Coast
         { lon: 88.0, lat: 21.8 }, // Sundarbans / Bengal
-        // ── COMPLETE HIGH-DETAIL NORTHEAST INDIA (SEVEN SISTERS & SIKKIM) ──
         { lon: 91.5, lat: 23.5 }, // Tripura Peninsula (Agartala)
-        { lon: 93.0, lat: 22.0 }, // Mizoram Tip (Lushai Hills)
-        { lon: 94.2, lat: 24.5 }, // Manipur / Imphal Valley
+        { lon: 93.0, lat: 22.0 }, // Mizoram Tip
+        { lon: 94.2, lat: 24.5 }, // Manipur / Imphal
         { lon: 95.2, lat: 26.0 }, // Nagaland / Kohima
-        { lon: 96.8, lat: 27.2 }, // Assam East / Tinsukia
-        { lon: 97.2, lat: 28.0 }, // Arunachal Pradesh Far East Tip (Dong / Kibithu)
-        { lon: 96.0, lat: 28.6 }, // Dibang Valley / Upper Arunachal
+        { lon: 96.8, lat: 27.2 }, // Tinsukia / Assam East
+        { lon: 97.2, lat: 28.0 }, // Arunachal Pradesh Far East Tip (Kibithu)
+        { lon: 96.0, lat: 28.6 }, // Upper Arunachal
         { lon: 94.0, lat: 28.5 }, // Siang / Subansiri Arc
-        { lon: 92.0, lat: 27.8 }, // Tawang / West Kameng
-        { lon: 88.9, lat: 27.8 }, // Sikkim East / Nathu La
+        { lon: 92.0, lat: 27.8 }, // Tawang
+        { lon: 88.9, lat: 27.8 }, // Sikkim East
         { lon: 88.6, lat: 28.2 }, // Sikkim North Tip (Kanchenjunga)
-        { lon: 88.2, lat: 26.5 }, // Siliguri Corridor (Chicken's Neck)
+        { lon: 88.2, lat: 26.5 }, // Siliguri Corridor
         { lon: 85.0, lat: 27.8 }, // Nepal Border
-        { lon: 80.5, lat: 30.0 }, // Uttarakhand (Garhwal)
-        // ── MAJESTIC UNDIVIDED CROWN OF JAMMU, KASHMIR & LADAKH ──
-        { lon: 78.8, lat: 31.8 }, // Himachal East (Kinnaur)
-        { lon: 79.2, lat: 32.8 }, // Spiti / Demchok (South Ladakh)
+        { lon: 80.5, lat: 30.0 }, // Uttarakhand
+        // ── MAJESTIC UNDIVIDED CROWN (J&K and Ladakh) ──
+        { lon: 78.8, lat: 31.8 }, // Himachal East
+        { lon: 79.2, lat: 32.8 }, // Spiti / Demchok
         { lon: 79.5, lat: 34.2 }, // Pangong Tso / Eastern Aksai Chin
-        { lon: 79.2, lat: 35.3 }, // Northern Aksai Chin / Depsang
-        { lon: 77.8, lat: 35.7 }, // Karakoram Pass / Siachen Glacier
-        { lon: 76.2, lat: 36.0 }, // K2 / Karakoram Crest (Topmost Point of India)
+        { lon: 79.2, lat: 35.3 }, // Northern Aksai Chin
+        { lon: 77.8, lat: 35.7 }, // Karakoram Pass / Siachen
+        { lon: 76.2, lat: 36.0 }, // K2 / Karakoram Crest Tip
         { lon: 74.8, lat: 35.8 }, // Gilgit / Nanga Parbat
-        { lon: 73.5, lat: 34.8 }, // Muzaffarabad / Kashmir West Arc
+        { lon: 73.5, lat: 34.8 }, // Muzaffarabad
         { lon: 74.0, lat: 33.5 }, // Punch / Jammu West
-        { lon: 74.5, lat: 31.8 }, // Punjab / Wagah Border
+        { lon: 74.5, lat: 31.8 }, // Punjab / Wagah
         { lon: 71.5, lat: 29.5 }, // Thar Desert North
         { lon: 70.0, lat: 26.8 }, // Barmer / Rajasthan
-        { lon: 68.5, lat: 23.7 }, // Back to Kutch (Clean Unbroken Loop)
+        { lon: 68.5, lat: 23.7 }, // Back to Kutch
       ];
 
-      // Layered thread strands following the complete border of India including Northeast
-      for (let offset = -0.6; offset <= 0.6; offset += 0.3) {
+      // 6 Dense Layered Strands for India's Boundary
+      for (let offset = -0.8; offset <= 0.8; offset += 0.32) {
         const path = sovereignIndiaBoundary.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.25 }));
-        addGeoThreadPath(path, STAGE_2_DELAY, 0.88, 1.45, 52);
+        addGeoThreadPath(path, STAGE_2_DELAY, 0.90, 1.45, 52);
       }
 
-      // Dedicated Northeast Highlight Threads (Assam Valley & Meghalaya Plateau)
-      const northeastAssamSpine = [
-        { lon: 89.8, lat: 26.0 }, { lon: 91.8, lat: 26.2 }, { lon: 93.8, lat: 26.8 }, { lon: 95.5, lat: 27.5 },
-      ];
-      addGeoThreadPath(northeastAssamSpine, STAGE_2_DELAY + 200, 0.82, 1.25, 26);
-
-      const meghalayaPlateau = [
-        { lon: 89.8, lat: 25.5 }, { lon: 91.8, lat: 25.2 }, { lon: 92.8, lat: 25.4 },
-      ];
-      addGeoThreadPath(meghalayaPlateau, STAGE_2_DELAY + 350, 0.78, 1.15, 20);
-
-      // Natural Rivers inside India
+      // Dense Inland Rivers of India
       addGeoThreadPath([
         { lon: 79.0, lat: 31.0 }, { lon: 78.1, lat: 30.0 }, { lon: 79.5, lat: 28.5 },
         { lon: 81.8, lat: 25.4 }, { lon: 85.1, lat: 25.6 }, { lon: 88.0, lat: 24.5 },
         { lon: 89.5, lat: 23.0 }, { lon: 88.3, lat: 21.8 },
-      ], STAGE_2_DELAY + 450, 0.65, 1.0, 24); // Ganga
+      ], STAGE_2_DELAY + 300, 0.70, 1.1, 26); // Ganga
+
+      addGeoThreadPath([
+        { lon: 78.5, lat: 30.2 }, { lon: 77.3, lat: 28.6 }, { lon: 78.0, lat: 27.2 },
+        { lon: 81.8, lat: 25.4 },
+      ], STAGE_2_DELAY + 400, 0.65, 1.0, 22); // Yamuna
 
       addGeoThreadPath([
         { lon: 82.0, lat: 30.6 }, { lon: 87.0, lat: 29.2 }, { lon: 95.0, lat: 28.2 },
         { lon: 95.5, lat: 27.5 }, { lon: 91.5, lat: 26.2 }, { lon: 89.8, lat: 25.2 },
-      ], STAGE_2_DELAY + 550, 0.75, 1.15, 28); // Brahmaputra Valley
+      ], STAGE_2_DELAY + 500, 0.75, 1.15, 28); // Brahmaputra
 
       addGeoThreadPath([
         { lon: 81.0, lat: 31.0 }, { lon: 78.5, lat: 33.8 }, { lon: 76.0, lat: 34.5 },
         { lon: 74.0, lat: 35.5 }, { lon: 71.5, lat: 33.0 }, { lon: 70.0, lat: 28.0 }, { lon: 68.0, lat: 24.0 },
-      ], STAGE_2_DELAY + 650, 0.65, 1.0, 24); // Indus
+      ], STAGE_2_DELAY + 600, 0.65, 1.0, 24); // Indus
 
-      // Himalayas Crest
-      const himalayasCrest = [
+      addGeoThreadPath([
+        { lon: 81.6, lat: 22.7 }, { lon: 78.0, lat: 22.2 }, { lon: 74.0, lat: 21.8 }, { lon: 72.8, lat: 21.6 },
+      ], STAGE_2_DELAY + 700, 0.65, 1.0, 20); // Narmada
+
+      addGeoThreadPath([
+        { lon: 73.5, lat: 19.8 }, { lon: 76.0, lat: 19.0 }, { lon: 80.0, lat: 16.5 }, { lon: 82.2, lat: 16.9 },
+      ], STAGE_2_DELAY + 800, 0.65, 1.0, 22); // Godavari
+
+      // Himalayas Mountain Ranges (3 Parallel Ridges)
+      const himalayasCrest1 = [
         { lon: 75.0, lat: 34.5 }, { lon: 80.5, lat: 30.2 }, { lon: 88.5, lat: 27.6 }, { lon: 95.0, lat: 28.5 },
       ];
-      addGeoThreadPath(himalayasCrest, STAGE_2_DELAY + 750, 0.78, 1.3, 26);
-      addGeoThreadPath(himalayasCrest.map(g => ({ lon: g.lon, lat: g.lat - 0.6 })), STAGE_2_DELAY + 850, 0.68, 1.0, 26);
+      addGeoThreadPath(himalayasCrest1, STAGE_2_DELAY + 850, 0.82, 1.35, 28);
+      addGeoThreadPath(himalayasCrest1.map(g => ({ lon: g.lon, lat: g.lat - 0.5 })), STAGE_2_DELAY + 950, 0.72, 1.1, 28);
+      addGeoThreadPath(himalayasCrest1.map(g => ({ lon: g.lon, lat: g.lat - 1.0 })), STAGE_2_DELAY + 1050, 0.62, 0.95, 28);
 
       // Ghats
       addGeoThreadPath([
         { lon: 73.2, lat: 20.2 }, { lon: 73.8, lat: 16.5 }, { lon: 75.5, lat: 12.0 }, { lon: 77.0, lat: 8.8 },
-      ], STAGE_2_DELAY + 950, 0.68, 1.05, 18);
+      ], STAGE_2_DELAY + 1100, 0.70, 1.1, 20);
       addGeoThreadPath([
         { lon: 86.5, lat: 21.2 }, { lon: 83.0, lat: 18.0 }, { lon: 80.0, lat: 14.2 }, { lon: 78.5, lat: 11.5 },
-      ], STAGE_2_DELAY + 1050, 0.62, 0.95, 18);
+      ], STAGE_2_DELAY + 1150, 0.65, 1.0, 20);
 
       // Sri Lanka
       const sriLanka = [
         { lon: 79.8, lat: 9.8 }, { lon: 81.8, lat: 8.5 }, { lon: 81.2, lat: 6.0 },
         { lon: 79.7, lat: 6.9 }, { lon: 79.8, lat: 9.8 },
       ];
-      addGeoThreadPath(sriLanka, STAGE_2_DELAY + 1100, 0.78, 1.2, 16);
+      addGeoThreadPath(sriLanka, STAGE_2_DELAY + 1200, 0.80, 1.25, 18);
 
       // ── STAGE 3 (2600ms - 3800ms): High-Precision Arabia & Africa Coastlines ─
       const STAGE_3_DELAY = 2600;
@@ -338,9 +338,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 50.8, lat: 26.1 }, { lon: 50.0, lat: 27.0 }, { lon: 48.5, lat: 29.5 },
         { lon: 48.0, lat: 30.0 },
       ];
-      for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
+      for (let offset = -0.6; offset <= 0.6; offset += 0.4) {
         const path = arabiaMainCoast.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
-        addGeoThreadPath(path, STAGE_3_DELAY, 0.80, 1.3, 30);
+        addGeoThreadPath(path, STAGE_3_DELAY, 0.82, 1.35, 32);
       }
 
       const redSeaAfricanCoast = [
@@ -348,14 +348,14 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 37.0, lat: 20.0 }, { lon: 38.5, lat: 18.0 }, { lon: 41.5, lat: 15.0 },
         { lon: 43.0, lat: 11.6 },
       ];
-      addGeoThreadPath(redSeaAfricanCoast, STAGE_3_DELAY + 250, 0.70, 1.1, 24);
+      addGeoThreadPath(redSeaAfricanCoast, STAGE_3_DELAY + 250, 0.72, 1.15, 26);
 
       const nileRiver = [
         { lon: 33.0, lat: 4.0 }, { lon: 31.8, lat: 9.5 }, { lon: 32.5, lat: 15.6 },
         { lon: 30.5, lat: 19.5 }, { lon: 32.8, lat: 24.0 }, { lon: 31.2, lat: 30.0 },
         { lon: 30.0, lat: 31.3 }, { lon: 31.5, lat: 31.5 }, { lon: 32.3, lat: 31.2 },
       ];
-      addGeoThreadPath(nileRiver, STAGE_3_DELAY + 400, 0.75, 1.15, 26);
+      addGeoThreadPath(nileRiver, STAGE_3_DELAY + 400, 0.78, 1.2, 28);
 
       const hornOfAfricaDetailed = [
         { lon: 43.0, lat: 11.6 }, { lon: 46.0, lat: 11.8 }, { lon: 51.2, lat: 11.8 },
@@ -363,9 +363,9 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 41.5, lat: -1.5 }, { lon: 39.6, lat: -4.0 }, { lon: 39.0, lat: -6.8 },
         { lon: 40.5, lat: -15.0 },
       ];
-      for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
+      for (let offset = -0.6; offset <= 0.6; offset += 0.4) {
         const path = hornOfAfricaDetailed.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
-        addGeoThreadPath(path, STAGE_3_DELAY + 600, 0.80, 1.25, 28);
+        addGeoThreadPath(path, STAGE_3_DELAY + 600, 0.82, 1.3, 30);
       }
 
       const madagascarDetailed = [
@@ -373,7 +373,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 47.0, lat: -25.5 }, { lon: 44.0, lat: -25.0 }, { lon: 43.6, lat: -20.0 },
         { lon: 46.5, lat: -15.5 }, { lon: 49.2, lat: -12.0 },
       ];
-      addGeoThreadPath(madagascarDetailed, STAGE_3_DELAY + 900, 0.75, 1.15, 22);
+      addGeoThreadPath(madagascarDetailed, STAGE_3_DELAY + 900, 0.78, 1.2, 24);
 
       // ── STAGE 4 (4000ms - 5200ms): High-Precision SE Asia, Indonesia & China ─
       const STAGE_4_DELAY = 4000;
@@ -385,56 +385,56 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 107.0, lat: 10.5 }, { lon: 109.2, lat: 13.5 }, { lon: 108.0, lat: 16.5 },
         { lon: 106.5, lat: 20.8 }, { lon: 108.0, lat: 21.5 },
       ];
-      for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
+      for (let offset = -0.6; offset <= 0.6; offset += 0.4) {
         const path = indochinaDetailed.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
-        addGeoThreadPath(path, STAGE_4_DELAY, 0.80, 1.3, 30);
+        addGeoThreadPath(path, STAGE_4_DELAY, 0.82, 1.35, 32);
       }
 
       const mekongRiver = [
         { lon: 94.0, lat: 33.0 }, { lon: 99.0, lat: 24.0 }, { lon: 101.0, lat: 20.0 },
         { lon: 104.0, lat: 17.0 }, { lon: 105.5, lat: 11.5 }, { lon: 105.0, lat: 9.5 },
       ];
-      addGeoThreadPath(mekongRiver, STAGE_4_DELAY + 200, 0.70, 1.05, 22);
+      addGeoThreadPath(mekongRiver, STAGE_4_DELAY + 200, 0.72, 1.1, 24);
 
       const sumatraDetailed = [
         { lon: 95.3, lat: 5.5 },  { lon: 97.5, lat: 4.2 },  { lon: 98.6, lat: 3.5 },
         { lon: 101.0, lat: 0.5 }, { lon: 103.5, lat: -3.0 }, { lon: 106.0, lat: -6.0 },
       ];
-      addGeoThreadPath(sumatraDetailed, STAGE_4_DELAY + 400, 0.75, 1.15, 22);
+      addGeoThreadPath(sumatraDetailed, STAGE_4_DELAY + 400, 0.78, 1.2, 24);
 
       const javaDetailed = [
         { lon: 106.0, lat: -6.0 }, { lon: 108.5, lat: -6.8 }, { lon: 110.0, lat: -7.0 },
         { lon: 112.5, lat: -7.5 }, { lon: 114.5, lat: -8.5 },
       ];
-      addGeoThreadPath(javaDetailed, STAGE_4_DELAY + 550, 0.72, 1.1, 18);
+      addGeoThreadPath(javaDetailed, STAGE_4_DELAY + 550, 0.75, 1.15, 20);
 
       const borneoDetailed = [
         { lon: 109.0, lat: 2.0 },  { lon: 112.0, lat: 3.5 },  { lon: 114.0, lat: 4.5 },
         { lon: 118.0, lat: 5.0 },  { lon: 119.0, lat: 4.0 },  { lon: 117.5, lat: -1.0 },
         { lon: 116.0, lat: -4.0 }, { lon: 110.0, lat: -3.0 }, { lon: 109.0, lat: 2.0 },
       ];
-      addGeoThreadPath(borneoDetailed, STAGE_4_DELAY + 700, 0.75, 1.15, 24);
+      addGeoThreadPath(borneoDetailed, STAGE_4_DELAY + 700, 0.78, 1.2, 26);
 
       const philippinesLuzon = [
         { lon: 120.0, lat: 18.5 }, { lon: 122.0, lat: 18.0 }, { lon: 121.5, lat: 14.5 },
         { lon: 124.0, lat: 13.0 },
       ];
-      addGeoThreadPath(philippinesLuzon, STAGE_4_DELAY + 850, 0.70, 1.05, 18);
+      addGeoThreadPath(philippinesLuzon, STAGE_4_DELAY + 850, 0.72, 1.1, 20);
 
       const philippinesMindanao = [
         { lon: 122.0, lat: 7.5 }, { lon: 125.5, lat: 9.8 }, { lon: 126.0, lat: 7.0 },
         { lon: 124.5, lat: 6.0 }, { lon: 122.0, lat: 7.5 },
       ];
-      addGeoThreadPath(philippinesMindanao, STAGE_4_DELAY + 950, 0.70, 1.05, 18);
+      addGeoThreadPath(philippinesMindanao, STAGE_4_DELAY + 950, 0.72, 1.1, 20);
 
       const chinaCoastDetailed = [
         { lon: 108.5, lat: 21.5 }, { lon: 110.5, lat: 21.0 }, { lon: 113.5, lat: 22.5 },
         { lon: 118.0, lat: 24.5 }, { lon: 121.5, lat: 31.2 }, { lon: 120.0, lat: 36.0 },
         { lon: 122.0, lat: 39.0 },
       ];
-      for (let offset = -0.5; offset <= 0.5; offset += 0.5) {
+      for (let offset = -0.6; offset <= 0.6; offset += 0.4) {
         const path = chinaCoastDetailed.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.2 }));
-        addGeoThreadPath(path, STAGE_4_DELAY + 1100, 0.75, 1.15, 26);
+        addGeoThreadPath(path, STAGE_4_DELAY + 1100, 0.78, 1.2, 28);
       }
 
       t0 = performance.now();
@@ -591,9 +591,19 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           }
         }
 
-        const opacity = th.alpha * Math.min(rawProgress * 1.5, 1);
+        // Distance glow swell under cursor
+        let mouseProximityGlow = 0;
+        if (mx > -500 && my > -500 && rawProgress >= 1.0) {
+          const midPt = th.pts[Math.floor(N / 2)];
+          const distToCursor = Math.hypot(mx - midPt.x, my - midPt.y);
+          if (distToCursor < 80) {
+            mouseProximityGlow = (1 - distToCursor / 80) * 0.35;
+          }
+        }
+
+        const opacity = Math.min((th.alpha + mouseProximityGlow) * Math.min(rawProgress * 1.5, 1), 0.98);
         ctx.strokeStyle = `rgba(${ACC_R},${ACC_G},${ACC_B},${opacity.toFixed(3)})`;
-        ctx.lineWidth = th.isHooked ? th.lw * 1.6 : th.lw;
+        ctx.lineWidth = th.isHooked ? th.lw * 1.7 : (th.lw + mouseProximityGlow * 0.6);
         ctx.lineCap = "round";
 
         ctx.beginPath();
@@ -666,7 +676,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="2D red thread map of Earth with complete Northeast India (Seven Sisters & Sikkim) and sweeping undivided dome crown for J&K and Ladakh — dead-straight thread lines fly in from offscreen in 4 geographic stages and flex smoothly into rock-solid world coastlines. Click and hold to grab and pull threads apart"
+      aria-label="Ultra high density 2D red thread Earth map — 200+ layered thread strands, Yamuna/Ganga/Brahmaputra/Indus/Narmada/Godavari rivers, 3 parallel Himalayan mountain ridges, complete Seven Sisters & Sikkim Northeast, undivided J&K dome crown, spinning emblem ring, and cursor proximity glow"
       role="img"
     />
   );
