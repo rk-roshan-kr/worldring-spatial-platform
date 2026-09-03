@@ -61,31 +61,54 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     let live = true;
     let rafId = 0;
 
-    // Helper: Orthographic 2D projection mapping (lon, lat) centered on India (78°E, 16°N)
-    const geoTo2D = (lon: number, lat: number): { x: number; y: number } => {
-      const centerLon = 78.0;
-      const centerLat = 16.0;
-      const scale = R / 70.0; // 70 degrees spans radius R
+    // Mathematical 3D -> 2D Orthographic Globe Projection centered on India (15°N, 75°E)
+    // Matches the exact perspective of the user's reference photograph!
+    const projectGeo = (lonDeg: number, latDeg: number): { x: number; y: number; visible: boolean } => {
+      const lon0 = (75.0 * Math.PI) / 180.0;
+      const lat0 = (15.0 * Math.PI) / 180.0;
 
-      const dx = (lon - centerLon) * scale;
-      const dy = -(lat - centerLat) * scale; // invert Y for canvas
-      return { x: cx + dx, y: cy + dy };
+      const lon = (lonDeg * Math.PI) / 180.0;
+      const lat = (latDeg * Math.PI) / 180.0;
+
+      const cosLat = Math.cos(lat);
+      const sinLat = Math.sin(lat);
+      const cosLat0 = Math.cos(lat0);
+      const sinLat0 = Math.sin(lat0);
+      const dLon = lon - lon0;
+      const cosDLon = Math.cos(dLon);
+
+      // Check visibility on front hemisphere
+      const cosC = sinLat0 * sinLat + cosLat0 * cosLat * cosDLon;
+      if (cosC < 0) {
+        return { x: cx, y: cy, visible: false };
+      }
+
+      // Orthographic coordinates
+      const px = R * cosLat * Math.sin(dLon);
+      const py = -R * (cosLat0 * sinLat - sinLat0 * cosLat * cosDLon);
+
+      return { x: cx + px, y: cy + py, visible: true };
     };
 
     const build = () => {
       threads = [];
       let threadId = 0;
 
-      const addThreadPath = (
-        rawPts: { x: number; y: number }[],
+      const addGeoThreadPath = (
+        geoPts: { lon: number; lat: number }[],
         alpha: number = 0.55,
-        lw: number = 0.9,
-        subdivide: number = 20
+        lw: number = 0.95,
+        subdivide: number = 22
       ) => {
-        if (rawPts.length < 2) return;
+        // Project all geographic points
+        const projPts = geoPts
+          .map((g) => projectGeo(g.lon, g.lat))
+          .filter((p) => p.visible);
+
+        if (projPts.length < 2) return;
 
         const pts: Pt[] = [];
-        const totalSegments = rawPts.length - 1;
+        const totalSegments = projPts.length - 1;
 
         for (let i = 0; i < subdivide; i++) {
           const tGlobal = i / (subdivide - 1);
@@ -93,8 +116,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           const segIdx = Math.min(Math.floor(segFloat), totalSegments - 1);
           const tSeg = segFloat - segIdx;
 
-          const p1 = rawPts[segIdx];
-          const p2 = rawPts[Math.min(segIdx + 1, totalSegments - 1)];
+          const p1 = projPts[segIdx];
+          const p2 = projPts[Math.min(segIdx + 1, totalSegments - 1)];
 
           const hx = p1.x + (p2.x - p1.x) * tSeg;
           const hy = p1.y + (p2.y - p1.y) * tSeg;
@@ -109,7 +132,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
         threads.push({
           pts,
-          delay: (threadId++ % 60) * 15,
+          delay: (threadId++ % 65) * 14,
           lw: lw + (Math.random() - 0.5) * 0.2,
           alpha: alpha + (Math.random() - 0.5) * 0.1,
           phase: Math.random() * Math.PI * 2,
@@ -120,8 +143,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         });
       };
 
-      // ── 1. Outer Ring Threads (Circle Frame matching favicon) ─────────────
-      const N_OUTER = 50;
+      // ── 1. Outer Ring Threads (Red Circle Frame from logo) ──────────────────
+      const N_OUTER = 55;
       for (let i = 0; i < N_OUTER; i++) {
         const baseAngle = (i / N_OUTER) * Math.PI * 2;
         const threadR = R + (Math.random() - 0.5) * 12;
@@ -152,148 +175,163 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         });
       }
 
-      // ── 2. Detailed India Subcontinent & Crown (Centered in upper-mid) ─────
+      // ── 2. Accurate India Subcontinent & Himalayas (Centered) ─────────────
 
-      // Detailed Indian Coastline & Border Path
-      const indiaCoastline = [
-        { lon: 68.7, lat: 23.8 }, // Kutch, Gujarat
-        { lon: 70.2, lat: 22.5 }, // Kathiawar peninsula
+      // Detailed Indian Subcontinent Boundary
+      const indiaSubcontinent = [
+        { lon: 68.2, lat: 23.7 }, // Kutch / Lakhpat
+        { lon: 70.0, lat: 22.8 }, // Rann of Kutch
+        { lon: 69.0, lat: 21.5 }, // Kathiawar West
+        { lon: 71.0, lat: 20.7 }, // Diu / Gir
         { lon: 72.8, lat: 21.2 }, // Gulf of Khambhat
-        { lon: 72.8, lat: 19.1 }, // Mumbai / Konkan Coast
+        { lon: 72.8, lat: 19.0 }, // Mumbai
         { lon: 73.8, lat: 15.4 }, // Goa
-        { lon: 74.8, lat: 12.9 }, // Mangalore
-        { lon: 76.2, lat: 9.9 },  // Kochi / Malabar
-        { lon: 77.5, lat: 8.1 },  // Kanyakumari (Cape Comorin)
-        { lon: 79.8, lat: 10.8 }, // Point Calimere
-        { lon: 80.3, lat: 13.1 }, // Chennai / Coromandel
-        { lon: 81.8, lat: 15.8 }, // Andhra Pradesh Coast
+        { lon: 74.8, lat: 12.8 }, // Mangalore
+        { lon: 75.8, lat: 11.2 }, // Kozhikode / Malabar
+        { lon: 76.5, lat: 9.5 },  // Alappuzha
+        { lon: 77.5, lat: 8.1 },  // Kanyakumari
+        { lon: 78.2, lat: 8.8 },  // Tirunelveli
+        { lon: 79.8, lat: 10.3 }, // Point Calimere
+        { lon: 79.8, lat: 11.9 }, // Puducherry
+        { lon: 80.3, lat: 13.1 }, // Chennai
+        { lon: 80.8, lat: 15.8 }, // Nellore / AP
+        { lon: 82.2, lat: 16.9 }, // Kakinada / Godavari Delta
         { lon: 83.3, lat: 17.7 }, // Visakhapatnam
-        { lon: 85.8, lat: 19.8 }, // Puri / Odisha
-        { lon: 88.3, lat: 21.6 }, // Sundarbans / West Bengal
-        { lon: 91.8, lat: 24.5 }, // Bangladesh / Meghalaya border
-        { lon: 95.0, lat: 27.5 }, // Assam / Northeast border
-        { lon: 88.6, lat: 27.3 }, // Sikkim / Himalayas
-        { lon: 85.0, lat: 27.8 }, // Nepal border
-        { lon: 81.0, lat: 30.0 }, // Uttarakhand Himalayas
-        { lon: 76.5, lat: 32.5 }, // Himachal Pradesh
-        { lon: 74.8, lat: 34.5 }, // Kashmir / Crown of India
-        { lon: 71.5, lat: 30.2 }, // Punjab / Frontier
-        { lon: 69.5, lat: 26.8 }, // Thar Desert / Rajasthan
-        { lon: 68.7, lat: 23.8 }, // Back to Kutch
+        { lon: 85.0, lat: 19.3 }, // Chilika Lake
+        { lon: 86.8, lat: 21.0 }, // Balasore / Odisha
+        { lon: 88.2, lat: 21.6 }, // Sundarbans
+        { lon: 91.8, lat: 22.3 }, // Chittagong
+        { lon: 92.5, lat: 25.0 }, // Meghalaya / Assam
+        { lon: 95.0, lat: 27.5 }, // Arunachal Pradesh
+        { lon: 88.6, lat: 27.3 }, // Sikkim / Kanchenjunga
+        { lon: 85.3, lat: 27.7 }, // Nepal / Kathmandu
+        { lon: 81.0, lat: 30.0 }, // Uttarakhand / Nanda Devi
+        { lon: 77.0, lat: 31.8 }, // Himachal Pradesh
+        { lon: 74.8, lat: 34.1 }, // Kashmir / Srinagar
+        { lon: 73.8, lat: 34.8 }, // Gilgit / Nanga Parbat
+        { lon: 71.0, lat: 30.0 }, // Punjab / Indus Plain
+        { lon: 69.8, lat: 26.5 }, // Jaisalmer / Rajasthan
+        { lon: 68.2, lat: 23.7 }, // Back to Kutch
       ];
 
-      // Add 4 layered thread strands for the Indian Peninsula outline
-      for (let offset = -0.8; offset <= 0.8; offset += 0.5) {
-        const path2D = indiaCoastline.map((g) =>
-          geoTo2D(g.lon + offset, g.lat + offset * 0.4)
-        );
-        addThreadPath(path2D, 0.80, 1.3, 30);
+      // Add 4 layered thread strands for high visual density along India's border
+      for (let offset = -0.6; offset <= 0.6; offset += 0.4) {
+        const path = indiaSubcontinent.map((g) => ({
+          lon: g.lon + offset,
+          lat: g.lat + offset * 0.3,
+        }));
+        addGeoThreadPath(path, 0.82, 1.35, 32);
       }
 
-      // Himalayas Mountain Chain Threads (3 sweeping arcs across Northern India)
-      const himalayas1 = [
-        { lon: 71.0, lat: 35.5 }, // Karakoram / Pamir
-        { lon: 75.0, lat: 34.0 }, // Kashmir Himalayas
-        { lon: 80.0, lat: 30.5 }, // Uttarakhand / Nepal
-        { lon: 88.0, lat: 28.0 }, // Everest region
-        { lon: 95.0, lat: 28.5 }, // Arunachal Himalayas
+      // Himalayas Mountain Ranges (3 Parallel Mountain Crest Strands)
+      const mainHimalayas = [
+        { lon: 72.0, lat: 35.8 }, // Hindu Kush / Karakoram
+        { lon: 75.5, lat: 34.2 }, // Ladakh / Zanskar
+        { lon: 80.5, lat: 30.2 }, // Uttarakhand
+        { lon: 85.0, lat: 28.2 }, // Annapurna / Everest
+        { lon: 88.5, lat: 27.6 }, // Kanchenjunga
+        { lon: 94.5, lat: 28.5 }, // Namcha Barwa
       ];
-      addThreadPath(himalayas1.map((g) => geoTo2D(g.lon, g.lat)), 0.70, 1.1, 24);
-      addThreadPath(himalayas1.map((g) => geoTo2D(g.lon + 0.4, g.lat - 0.5)), 0.60, 0.95, 24);
-      addThreadPath(himalayas1.map((g) => geoTo2D(g.lon - 0.4, g.lat + 0.5)), 0.50, 0.85, 24);
+      addGeoThreadPath(mainHimalayas, 0.75, 1.25, 26);
+      addGeoThreadPath(mainHimalayas.map((g) => ({ lon: g.lon, lat: g.lat - 0.7 })), 0.65, 1.0, 26);
+      addGeoThreadPath(mainHimalayas.map((g) => ({ lon: g.lon, lat: g.lat + 0.8 })), 0.55, 0.9, 26);
 
-      // Western & Eastern Ghats Ridge Threads
+      // Western Ghats Mountain Ridge
       const westernGhats = [
-        { lon: 73.0, lat: 20.5 },
+        { lon: 73.2, lat: 20.2 },
         { lon: 73.8, lat: 16.5 },
         { lon: 75.5, lat: 12.0 },
         { lon: 77.0, lat: 8.8 },
       ];
-      addThreadPath(westernGhats.map((g) => geoTo2D(g.lon, g.lat)), 0.60, 0.9, 16);
+      addGeoThreadPath(westernGhats, 0.65, 1.0, 18);
 
+      // Eastern Ghats Mountain Ridge
       const easternGhats = [
-        { lon: 87.0, lat: 21.0 },
+        { lon: 86.5, lat: 21.2 },
         { lon: 83.0, lat: 18.0 },
-        { lon: 80.0, lat: 14.0 },
+        { lon: 80.0, lat: 14.2 },
         { lon: 78.5, lat: 11.5 },
       ];
-      addThreadPath(easternGhats.map((g) => geoTo2D(g.lon, g.lat)), 0.55, 0.85, 16);
+      addGeoThreadPath(easternGhats, 0.60, 0.9, 18);
 
-      // Sri Lanka Island Thread
+      // Sri Lanka Teardrop Island
       const sriLanka = [
         { lon: 79.8, lat: 9.8 },
         { lon: 81.8, lat: 8.5 },
-        { lon: 81.2, lat: 6.0 }, // Southern tip
-        { lon: 79.7, lat: 6.9 }, // Colombo
+        { lon: 81.2, lat: 6.0 }, // Dondra Head
+        { lon: 79.8, lat: 6.9 }, // Colombo
         { lon: 79.8, lat: 9.8 },
       ];
-      addThreadPath(sriLanka.map((g) => geoTo2D(g.lon, g.lat)), 0.75, 1.1, 14);
+      addGeoThreadPath(sriLanka, 0.78, 1.2, 16);
 
-      // ── 3. Arabian Peninsula & Red Sea / Persian Gulf (West / Left) ────────
+      // ── 3. Arabian Peninsula & Red Sea / Persian Gulf (West / Upper-Left) ──
 
       // Red Sea Strip
-      const redSeaWest = [
-        { lon: 32.5, lat: 29.8 }, // Suez
-        { lon: 35.0, lat: 25.0 }, // Egypt coast
-        { lon: 38.5, lat: 18.0 }, // Sudan coast
+      const redSeaEast = [
+        { lon: 32.5, lat: 29.9 }, // Suez
+        { lon: 35.0, lat: 27.5 },
+        { lon: 39.0, lat: 21.5 }, // Jeddah
         { lon: 43.0, lat: 12.6 }, // Bab-el-Mandeb
       ];
-      addThreadPath(redSeaWest.map((g) => geoTo2D(g.lon, g.lat)), 0.45, 0.8, 16);
+      addGeoThreadPath(redSeaEast, 0.55, 0.9, 18);
 
-      // Arabian Peninsula Coastline (Yemen, Oman, UAE, Persian Gulf)
+      // Arabian Peninsula Coastline
       const arabiaCoast = [
-        { lon: 43.5, lat: 12.6 }, // Bab-el-Mandeb
-        { lon: 45.0, lat: 12.8 }, // Aden / Yemen
-        { lon: 54.0, lat: 17.0 }, // Dhofar / Oman
-        { lon: 59.8, lat: 22.5 }, // Ras al Hadd / Oman tip
-        { lon: 56.5, lat: 26.0 }, // Strait of Hormuz
-        { lon: 50.0, lat: 27.0 }, // Persian Gulf / Qatar
-        { lon: 48.0, lat: 30.0 }, // Kuwait / Shatt al-Arab
+        { lon: 43.2, lat: 12.6 }, // Bab-el-Mandeb
+        { lon: 45.0, lat: 12.8 }, // Aden
+        { lon: 53.0, lat: 16.5 }, // Salalah / Oman
+        { lon: 59.8, lat: 22.5 }, // Ras al Hadd
+        { lon: 56.5, lat: 26.2 }, // Strait of Hormuz
+        { lon: 50.5, lat: 26.0 }, // Qatar / Gulf
+        { lon: 48.0, lat: 30.0 }, // Kuwait
       ];
-      addThreadPath(arabiaCoast.map((g) => geoTo2D(g.lon, g.lat)), 0.55, 0.9, 22);
+      addGeoThreadPath(arabiaCoast, 0.60, 0.95, 22);
 
-      // Horn of Africa & East Africa Coast
+      // Horn of Africa & East Africa (Lower-Left)
       const hornOfAfrica = [
-        { lon: 43.0, lat: 11.5 }, // Djibouti
-        { lon: 51.2, lat: 11.8 }, // Cape Guardafui (Horn tip)
+        { lon: 43.0, lat: 11.6 }, // Djibouti
+        { lon: 51.2, lat: 11.8 }, // Cape Guardafui
         { lon: 49.0, lat: 8.0 },  // Somalia coast
-        { lon: 41.0, lat: -2.0 }, // Kenya coast
+        { lon: 41.5, lat: -1.5 }, // Kenya / Mombasa
         { lon: 39.0, lat: -6.0 }, // Tanzania / Zanzibar
+        { lon: 40.5, lat: -15.0 }, // Mozambique
       ];
-      addThreadPath(hornOfAfrica.map((g) => geoTo2D(g.lon, g.lat)), 0.55, 0.9, 20);
+      addGeoThreadPath(hornOfAfrica, 0.58, 0.9, 22);
 
-      // Madagascar Island (Lower-Left)
+      // Madagascar Island
       const madagascar = [
-        { lon: 49.2, lat: -12.0 }, // North tip
+        { lon: 49.2, lat: -12.0 },
         { lon: 50.5, lat: -16.0 },
-        { lon: 47.0, lat: -25.0 }, // South tip
+        { lon: 47.0, lat: -25.0 },
         { lon: 43.5, lat: -23.0 },
         { lon: 49.2, lat: -12.0 },
       ];
-      addThreadPath(madagascar.map((g) => geoTo2D(g.lon, g.lat)), 0.45, 0.8, 16);
+      addGeoThreadPath(madagascar, 0.50, 0.85, 18);
 
       // ── 4. Southeast Asia & Indonesian Archipelago (East / Right) ──────────
 
-      // Indochina Coastline (Myanmar, Thailand, Vietnam)
-      const indochina = [
-        { lon: 92.5, lat: 20.5 }, // Myanmar / Rakhine
-        { lon: 97.5, lat: 16.0 }, // Gulf of Martaban
-        { lon: 98.5, lat: 10.0 }, // Kra Isthmus
-        { lon: 103.8, lat: 1.3 }, // Singapore / Malacca Strait
-        { lon: 105.0, lat: 9.0 }, // Mekong Delta / Vietnam
-        { lon: 109.0, lat: 13.5 }, // Vietnam coast
-        { lon: 108.0, lat: 16.0 }, // Da Nang
+      // Indochina Peninsula & Vietnam Coast
+      const indochinaCoast = [
+        { lon: 92.5, lat: 20.5 }, // Myanmar
+        { lon: 97.5, lat: 16.0 }, // Yangon
+        { lon: 98.5, lat: 9.8 },  // Kra Isthmus
+        { lon: 103.8, lat: 1.3 }, // Singapore
+        { lon: 104.5, lat: 10.0 }, // Gulf of Thailand
+        { lon: 107.0, lat: 10.5 }, // Saigon / Mekong Delta
+        { lon: 109.2, lat: 13.5 }, // Vietnam East Coast
+        { lon: 108.0, lat: 16.5 }, // Da Nang
+        { lon: 106.5, lat: 20.8 }, // Hanoi / Haiphong
       ];
-      addThreadPath(indochina.map((g) => geoTo2D(g.lon, g.lat)), 0.55, 0.9, 22);
+      addGeoThreadPath(indochinaCoast, 0.60, 0.95, 24);
 
-      // Sumatra Island Diagonal Arc
+      // Sumatra Island Arc
       const sumatra = [
         { lon: 95.3, lat: 5.5 },  // Banda Aceh
-        { lon: 98.6, lat: 3.0 },  // Medan
+        { lon: 98.6, lat: 3.5 },  // Medan
         { lon: 102.0, lat: -2.0 },
         { lon: 106.0, lat: -6.0 }, // Sunda Strait
       ];
-      addThreadPath(sumatra.map((g) => geoTo2D(g.lon, g.lat)), 0.50, 0.85, 16);
+      addGeoThreadPath(sumatra, 0.55, 0.9, 18);
 
       // Java Island Arc
       const java = [
@@ -301,59 +339,76 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 110.0, lat: -7.0 }, // Semarang
         { lon: 114.5, lat: -8.5 }, // Bali Strait
       ];
-      addThreadPath(java.map((g) => geoTo2D(g.lon, g.lat)), 0.45, 0.8, 14);
+      addGeoThreadPath(java, 0.50, 0.85, 16);
 
       // Borneo Island Contour
       const borneo = [
         { lon: 109.0, lat: 2.0 },
-        { lon: 117.0, lat: 7.0 }, // Sabah
-        { lon: 119.0, lat: 4.0 },
+        { lon: 114.0, lat: 4.5 },
+        { lon: 118.0, lat: 5.0 }, // Sabah
         { lon: 117.0, lat: -4.0 },
         { lon: 109.0, lat: 2.0 },
       ];
-      addThreadPath(borneo.map((g) => geoTo2D(g.lon, g.lat)), 0.45, 0.8, 16);
+      addGeoThreadPath(borneo, 0.50, 0.85, 18);
 
-      // ── 5. Central Asia & Caspian / Persian Gulf (Top-Left) ────────────────
+      // Philippines Island Arc (Upper-Right)
+      const philippines = [
+        { lon: 120.0, lat: 18.5 }, // Luzon / Manila
+        { lon: 123.0, lat: 11.5 }, // Visayas
+        { lon: 125.0, lat: 7.0 },  // Mindanao
+      ];
+      addGeoThreadPath(philippines, 0.45, 0.8, 16);
 
-      // Caspian Sea Outline
+      // ── 5. Central Asia & Caspian / Aral Seas (Top-Left) ───────────────────
+
+      // Caspian Sea Contour
       const caspianSea = [
-        { lon: 50.0, lat: 37.0 }, // Iran coast
-        { lon: 53.0, lat: 40.0 }, // Turkmenistan coast
-        { lon: 51.5, lat: 46.5 }, // Volga Delta / Russia
-        { lon: 47.0, lat: 41.5 }, // Baku / Azerbaijan
+        { lon: 50.0, lat: 37.0 }, // Iran
+        { lon: 53.0, lat: 40.0 }, // Turkmenistan
+        { lon: 51.5, lat: 46.5 }, // Volga / Russia
+        { lon: 47.0, lat: 41.5 }, // Azerbaijan
         { lon: 50.0, lat: 37.0 },
       ];
-      addThreadPath(caspianSea.map((g) => geoTo2D(g.lon, g.lat)), 0.45, 0.8, 16);
+      addGeoThreadPath(caspianSea, 0.48, 0.85, 18);
 
-      // ── 6. Earth Spatial Graticule Lines (Latitude / Longitude Arcs) ────────
+      // China East Coastline (Top-Right)
+      const chinaCoast = [
+        { lon: 108.5, lat: 21.5 }, // Guangxi
+        { lon: 113.5, lat: 22.5 }, // Hong Kong / Pearl River Delta
+        { lon: 118.0, lat: 24.5 }, // Taiwan Strait
+        { lon: 121.5, lat: 31.2 }, // Shanghai / Yangtze Delta
+      ];
+      addGeoThreadPath(chinaCoast, 0.45, 0.8, 18);
 
-      // Tropic of Cancer (23.5°N) passing right across Kutch, Madhya Pradesh & Mizoram
+      // ── 6. Graticule Arcs (Equator, Tropics & Central Meridian) ────────────
+
+      // Tropic of Cancer (23.5°N)
       const tropicOfCancer = [];
-      for (let lon = 25; lon <= 125; lon += 4) {
-        tropicOfCancer.push(geoTo2D(lon, 23.5));
+      for (let lon = 20; lon <= 130; lon += 4) {
+        tropicOfCancer.push({ lon, lat: 23.5 });
       }
-      addThreadPath(tropicOfCancer, 0.35, 0.65, 26);
+      addGeoThreadPath(tropicOfCancer, 0.35, 0.65, 28);
 
-      // Equator (0° Latitude) across the Indian Ocean
+      // Equator (0° Latitude)
       const equator = [];
-      for (let lon = 25; lon <= 125; lon += 4) {
-        equator.push(geoTo2D(lon, 0.0));
+      for (let lon = 20; lon <= 130; lon += 4) {
+        equator.push({ lon, lat: 0.0 });
       }
-      addThreadPath(equator, 0.32, 0.65, 26);
+      addGeoThreadPath(equator, 0.32, 0.65, 28);
 
-      // 30°N Latitude (Across Himalayas & Middle East)
+      // 30°N Latitude Arc
       const lat30N = [];
-      for (let lon = 25; lon <= 125; lon += 4) {
-        lat30N.push(geoTo2D(lon, 30.0));
+      for (let lon = 20; lon <= 130; lon += 4) {
+        lat30N.push({ lon, lat: 30.0 });
       }
-      addThreadPath(lat30N, 0.32, 0.65, 26);
+      addGeoThreadPath(lat30N, 0.32, 0.65, 28);
 
-      // Central Meridian 78°E (Running straight down through India)
-      const meridian78E = [];
-      for (let lat = -35; lat <= 60; lat += 4) {
-        meridian78E.push(geoTo2D(78.0, lat));
+      // Central Meridian 75°E (Running straight down through India)
+      const meridian75E = [];
+      for (let lat = -40; lat <= 65; lat += 4) {
+        meridian75E.push({ lon: 75.0, lat });
       }
-      addThreadPath(meridian78E, 0.32, 0.65, 26);
+      addGeoThreadPath(meridian75E, 0.32, 0.65, 28);
 
       t0 = performance.now();
     };
@@ -434,7 +489,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         const breath = Math.sin(now * 0.0008 + th.phase) * 1.2 * easeIntro;
         const N = th.pts.length;
 
-        // Check for thread snapping if pulled too far
+        // Snapping check when pulled too far
         if (th.isHooked && mx > -500) {
           const p = th.pts[th.hookPtIdx];
           const stretchDist = Math.hypot(mx - p.hx, my - p.hy);
@@ -571,7 +626,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="Interactive 2D thread map of Earth matching reference image (India, Horn of Africa, Southeast Asia, Himalayas) framed in red circular emblem"
+      aria-label="High-precision 2D orthographic thread map of Earth matching reference photo (India, Himalayas, Sri Lanka, Horn of Africa, Indochina) framed in red emblem — click and hold to grab and pull threads apart"
       role="img"
     />
   );
