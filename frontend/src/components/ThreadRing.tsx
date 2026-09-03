@@ -66,6 +66,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     let mx = -9999, my = -9999;
     let isPointerDown = false;
     let live = true;
+    let isVisibleInViewport = true; // Track visibility to pause animation loop when scrolled away
     let rafId = 0;
 
     // Mathematical 3D -> 2D Orthographic Globe Projection centered on India (16°N, 78°E)
@@ -265,7 +266,6 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         { lon: 68.5, lat: 23.7 }, // Back to Kutch
       ];
 
-      // 4 Precision Layered Strands for India
       for (let offset = -0.6; offset <= 0.6; offset += 0.4) {
         const path = sovereignIndiaBoundary.map((g) => ({ lon: g.lon + offset, lat: g.lat + offset * 0.25 }));
         addGeoThreadPath(path, STAGE_2_DELAY, 0.88, 1.4, 34);
@@ -447,7 +447,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     };
 
     const frame = (now: number) => {
-      if (!live) return;
+      if (!live || !isVisibleInViewport) return; // 0% CPU/GPU usage when scrolled away!
       ctx.clearRect(0, 0, W, H);
 
       const elapsed = now - t0;
@@ -553,6 +553,23 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       rafId = requestAnimationFrame(frame);
     };
 
+    // IntersectionObserver: Pause canvas animation loop when hero is out of view!
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const inView = entry.isIntersecting;
+        if (inView && !isVisibleInViewport) {
+          isVisibleInViewport = true;
+          cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(frame);
+        } else if (!inView && isVisibleInViewport) {
+          isVisibleInViewport = false;
+          cancelAnimationFrame(rafId);
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(cv);
+
     const updateMousePos = (e: PointerEvent) => {
       const r = cv.getBoundingClientRect();
       mx = e.clientX - r.left;
@@ -595,6 +612,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     return () => {
       live = false;
       cancelAnimationFrame(rafId);
+      observer.disconnect();
       cv.removeEventListener("pointerdown", onPointerDown);
       cv.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
@@ -608,7 +626,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       ref={cvRef}
       className={`block w-full h-full ${className}`}
       style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="High-performance 60fps 2D red thread Earth map — optimized DPR scaling, consolidated 80 high-fidelity thread paths, zero frame-rate lag"
+      aria-label="High-performance 2D red thread Earth map — automatically pauses animation loop when scrolled out of view for zero CPU/GPU website lag"
       role="img"
     />
   );
