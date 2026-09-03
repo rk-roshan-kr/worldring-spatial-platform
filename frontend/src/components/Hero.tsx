@@ -2,11 +2,11 @@
 
 import { SITE } from "@/config/site";
 import { Reveal } from "@/components/Reveal";
-import { Box, Cpu, Layers } from "lucide-react";
+import { ThreadRing } from "@/components/ThreadRing";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-/** Counts a number up from 0 to `target` over `duration`ms once `trigger` is true. */
+/** Counts a number from 0 → target over `duration`ms once `trigger` is true */
 function useCounter(target: number, duration: number, trigger: boolean) {
   const [value, setValue] = useState(0);
   useEffect(() => {
@@ -15,11 +15,9 @@ function useCounter(target: number, duration: number, trigger: boolean) {
     let raf: number;
     const step = (ts: number) => {
       if (!start) start = ts;
-      const progress = Math.min((ts - start) / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(eased * target));
-      if (progress < 1) raf = requestAnimationFrame(step);
+      const t = Math.min((ts - start) / duration, 1);
+      setValue(Math.round((1 - Math.pow(1 - t, 3)) * target));
+      if (t < 1) raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
@@ -27,54 +25,42 @@ function useCounter(target: number, duration: number, trigger: boolean) {
   return value;
 }
 
-/** Extracts a numeric value and its trailing unit string from a meta string like "39 frames" */
-function parseMeta(str: string): { num: number; rest: string } | null {
-  const match = str.match(/^(\d+)(.*)/);
-  if (!match) return null;
-  return { num: parseInt(match[1]), rest: match[2] };
+function parseMeta(s: string): { num: number; rest: string } | null {
+  const m = s.match(/^(\d+)(.*)/);
+  return m ? { num: parseInt(m[1]), rest: m[2] } : null;
 }
 
 function MetaItem({ text, trigger }: { text: string; trigger: boolean }) {
   const parsed = parseMeta(text);
-  const count = useCounter(parsed?.num ?? 0, 1400, trigger && !!parsed);
+  const count  = useCounter(parsed?.num ?? 0, 1400, trigger && !!parsed);
   return (
     <li className="flex items-center gap-1.5">
       <span className="w-1 h-1 bg-muted rounded-full shrink-0" />
-      {parsed ? (
-        <span>
-          <span className="tabular-nums">{count}</span>
-          {parsed.rest}
-        </span>
-      ) : (
-        text
-      )}
+      {parsed ? <><span className="tabular-nums">{count}</span>{parsed.rest}</> : text}
     </li>
   );
 }
 
 export function Hero({ onOpenContact }: { onOpenContact?: (mode?: string) => void }) {
   const rightColRef = useRef<HTMLDivElement>(null);
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef  = useRef<HTMLElement>(null);
   const [triggered, setTriggered] = useState(false);
 
-  // Subtle parallax on right column — shifts slightly on scroll
+  // Subtle parallax on the globe — shifts very slightly against scroll
   useEffect(() => {
     const container = document.getElementById("snap-container") ?? window;
     const handle = () => {
       if (!rightColRef.current) return;
-      const scrollY =
-        container === window
-          ? window.scrollY
-          : (container as HTMLElement).scrollTop;
-      // Very subtle: 0.08 factor, max 32px shift
-      const shift = Math.min(scrollY * 0.08, 32);
-      rightColRef.current.style.transform = `translateY(${shift}px)`;
+      const scrollY = container === window
+        ? window.scrollY
+        : (container as HTMLElement).scrollTop;
+      rightColRef.current.style.transform = `translateY(${Math.min(scrollY * 0.06, 24)}px)`;
     };
     container.addEventListener("scroll", handle, { passive: true });
     return () => container.removeEventListener("scroll", handle);
   }, []);
 
-  // Trigger number counters when section enters view
+  // Trigger counters when hero enters view
   useEffect(() => {
     if (!sectionRef.current) return;
     const io = new IntersectionObserver(
@@ -91,54 +77,48 @@ export function Hero({ onOpenContact }: { onOpenContact?: (mode?: string) => voi
       id="top"
       className="mx-auto max-w-[76rem] px-(--gutter) pt-6 md:pt-10 lg:pt-4 pb-6 md:pb-10 lg:pb-3"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.3fr] gap-8 lg:gap-14 lg:items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 lg:gap-12 lg:items-center">
 
-        {/* Left Column */}
-        <div className="space-y-5 lg:space-y-5">
+        {/* ── Left column ── */}
+        <div className="space-y-5">
           <Reveal>
-            <div className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-accent-deep mb-2 font-semibold flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-accent shrink-0" />
-              <span>Stage 0 · Hypothesis Validation</span>
+            <div className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-accent mb-2 font-semibold flex items-center gap-2">
+              <span className="inline-block w-4 h-px bg-accent" />
+              Stage 0 · Hypothesis Validation
             </div>
-            <h1 className="font-serif text-[clamp(2.2rem,5.5vw,4.4rem)] leading-[1.12] tracking-[-0.02em] font-medium max-w-[20ch] text-balance text-ink">
+            <h1 className="font-serif text-[clamp(2.1rem,5.5vw,4.4rem)] leading-[1.12] tracking-[-0.02em] font-medium max-w-[20ch] text-balance text-ink">
               {SITE.hero.headline}
             </h1>
-            <p className="font-serif italic text-[clamp(1rem,2.2vw,1.45rem)] text-accent-deep mt-2">
+            <p className="font-serif italic text-[clamp(1rem,2.2vw,1.4rem)] text-accent mt-2">
               {SITE.hero.subhead}
             </p>
           </Reveal>
 
           <Reveal>
-            <p className="prose-copy text-[0.95rem] sm:text-[1rem] leading-relaxed max-w-[46ch] text-body-text">
+            <p className="prose-copy text-[0.95rem] sm:text-[1rem] leading-relaxed max-w-[46ch]">
               {SITE.hero.lede}
             </p>
           </Reveal>
 
           <Reveal>
-            <div className="flex flex-col xs:flex-row flex-wrap items-start xs:items-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 pt-2">
               <button
                 onClick={() => onOpenContact?.("FUND_PROTOTYPE")}
-                className="btn btn-solid cursor-pointer flex items-center gap-2 w-full xs:w-auto justify-center xs:justify-start"
+                className="btn btn-solid cursor-pointer justify-center sm:justify-start"
               >
                 {SITE.hero.primaryCta.label}
               </button>
               <Link
                 href="/capture"
-                className="btn btn-solid bg-[#FFE8D6] text-[#FF6B35] border border-[#FF6B35]/20 hover:bg-[#FFE8D6]/80 flex items-center gap-2 w-full xs:w-auto justify-center xs:justify-start"
+                className="btn btn-ghost justify-center sm:justify-start"
               >
-                Launch Simulation →
+                Launch Simulation
               </Link>
-              <a
-                href={SITE.hero.secondaryCta.href}
-                className="btn btn-ghost flex items-center gap-2 w-full xs:w-auto justify-center xs:justify-start"
-              >
-                {SITE.hero.secondaryCta.label}
-              </a>
             </div>
           </Reveal>
 
           <Reveal>
-            <ul className="flex flex-wrap gap-x-6 gap-y-2 list-none m-0 mt-6 lg:mt-4 pt-4 border-t border-line font-mono text-[0.66rem] tracking-[0.06em] text-muted">
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 list-none m-0 mt-6 pt-4 border-t border-line font-mono text-[0.66rem] tracking-[0.06em] text-muted">
               {SITE.hero.meta.map((m) => (
                 <MetaItem key={m} text={m} trigger={triggered} />
               ))}
@@ -146,66 +126,27 @@ export function Hero({ onOpenContact }: { onOpenContact?: (mode?: string) => voi
           </Reveal>
         </div>
 
-        {/* Right Column — Vision Breakdown */}
-        <div ref={rightColRef} className="lg:mt-0 transition-transform duration-75 ease-out will-change-transform">
-          <Reveal className="lg:border-t-0 lg:pt-0">
-            <div className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted mb-3 font-semibold">
-              The 30-Second Vision Breakdown
+        {/* ── Right column — Thread Globe ── */}
+        <div
+          ref={rightColRef}
+          className="relative transition-transform duration-75 ease-out will-change-transform"
+        >
+          <Reveal>
+            <div className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted mb-3 font-semibold select-none">
+              Spatial Layer Mesh
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 p-4 sm:p-5 rounded bg-paper-deep text-ink border border-line">
 
-              <div className="p-3 sm:p-3.5 rounded border border-line bg-paper flex flex-col justify-between">
-                <div>
-                  <div className="font-mono text-[0.55rem] text-accent-deep uppercase tracking-wider font-bold mb-1">INPUT</div>
-                  <div className="font-serif font-semibold text-sm flex items-center gap-1.5">
-                    <Box className="w-4 h-4 text-accent shrink-0" /> Real 360° Video
-                  </div>
-                  <p className="text-[0.73rem] text-muted mt-1 leading-snug">
-                    Low-cost panoramic optical streams from car/drone rigs.
-                  </p>
-                </div>
-                <div className="mt-3 pt-2 border-t border-line font-mono text-[0.55rem] text-faint">
-                  5.7K equirectangular
-                </div>
-              </div>
-
-              <div className="p-3 sm:p-3.5 rounded border border-line bg-paper flex flex-col justify-between">
-                <div>
-                  <div className="font-mono text-[0.55rem] text-accent-deep uppercase tracking-wider font-bold mb-1">PIPELINE</div>
-                  <div className="font-serif font-semibold text-sm flex items-center gap-1.5">
-                    <Cpu className="w-4 h-4 text-accent shrink-0" /> 3D Reconstruction
-                  </div>
-                  <p className="text-[0.73rem] text-muted mt-1 leading-snug">
-                    Visual-inertial SfM, Gaussian Splatting &amp; PII blurring.
-                  </p>
-                </div>
-                <div className="mt-3 pt-2 border-t border-line font-mono text-[0.55rem] text-faint">
-                  6-DOF trajectories
-                </div>
-              </div>
-
-              <div className="p-3 sm:p-3.5 rounded border border-line bg-paper flex flex-col justify-between sm:col-span-2 lg:col-span-1">
-                <div>
-                  <div className="font-mono text-[0.55rem] text-accent-deep uppercase tracking-wider font-bold mb-1">OUTPUT SPATIAL INFRASTRUCTURE</div>
-                  <div className="font-serif font-semibold text-sm flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-accent shrink-0" /> Earthos 7-Layer Spatial Representation
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5 mt-3">
-                    <div className="p-2.5 rounded bg-paper-deep border border-line">
-                      <div className="font-mono text-[0.58rem] font-bold text-accent-deep">HUMAN WORLD</div>
-                      <div className="font-sans text-[0.72rem] font-semibold text-ink mt-0.5">OnMyWay Route</div>
-                      <div className="text-[0.66rem] text-muted leading-tight mt-0.5">Campus &amp; storefront location UX</div>
-                    </div>
-                    <div className="p-2.5 rounded bg-paper-deep border border-line">
-                      <div className="font-mono text-[0.58rem] font-bold text-accent-deep">MACHINE WORLD</div>
-                      <div className="font-sans text-[0.72rem] font-semibold text-ink mt-0.5">Data Wing Platform</div>
-                      <div className="text-[0.66rem] text-muted leading-tight mt-0.5">Robotics &amp; physical-AI datasets</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+            {/* Canvas container — square aspect ratio */}
+            <div
+              className="relative rounded border border-line bg-paper-deep overflow-hidden"
+              style={{ aspectRatio: "1 / 1" }}
+            >
+              <ThreadRing className="absolute inset-0 w-full h-full" />
             </div>
+
+            <p className="font-mono text-[0.56rem] uppercase tracking-[0.2em] text-faint mt-2.5 text-center select-none">
+              Move cursor to pull threads apart
+            </p>
           </Reveal>
         </div>
 
