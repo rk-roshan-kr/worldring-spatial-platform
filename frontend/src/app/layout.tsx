@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SITE } from "@/config/site";
+import { NetlifyBadgeSuppressor } from "@/components/NetlifyBadgeSuppressor";
 
 const newsreader = Newsreader({
   variable: "--font-newsreader",
@@ -134,16 +135,18 @@ const jsonLd = {
   },
 };
 
-const jsFlag = `document.documentElement.classList.add('js')`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${newsreader.variable} ${plexMono.variable} antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${newsreader.variable} ${plexMono.variable} antialiased`}
+    >
       <body className="min-h-screen flex flex-col">
+        <NetlifyBadgeSuppressor />
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        <script dangerouslySetInnerHTML={{ __html: jsFlag }} />
         {children}
         <script
           type="application/ld+json"
@@ -151,6 +154,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
           }}
         />
+        {/* Netlify Form Detection Prerender */}
+        <form name="contact" method="POST" action="/" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+          <input type="hidden" name="form-name" value="contact" />
+          <input type="text" name="name" />
+          <input type="email" name="email" />
+          <input type="text" name="organization" />
+          <input type="text" name="interestType" />
+          <textarea name="message"></textarea>
+          <input name="bot-field" />
+        </form>
+        <form name="newsletter" method="POST" action="/" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+          <input type="hidden" name="form-name" value="newsletter" />
+          <input type="email" name="email" />
+          <input name="bot-field" />
+        </form>
       </body>
     </html>
   );

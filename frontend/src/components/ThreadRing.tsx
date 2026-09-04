@@ -6,10 +6,11 @@ import { useEffect, useRef } from "react";
 const RING_FRAC   = 0.38;      // ring radius fraction of min(W, H)
 
 // Drag & Grab
-const HOOK_RADIUS = 44;        // grab radius around cursor (px)
-const MAX_HOOKS   = 16;        // max threads grabbed simultaneously
-const BREAK_DIST  = 160;       // max stretch before thread snaps
-const REPAIR_MS   = 1200;      // ms to re-knit snapped thread
+const HOOK_RADIUS  = 48;       // grab radius around cursor (px)
+const HOVER_RADIUS = 75;       // proximity hover influence radius (px)
+const MAX_HOOKS    = 18;       // max threads grabbed simultaneously
+const BREAK_DIST   = 170;      // max stretch before thread snaps
+const REPAIR_MS    = 1200;     // ms to re-knit snapped thread
 
 // Staged Intro Convergence Duration per thread (ms)
 const CONVERGE_MS = 2200;
@@ -17,8 +18,9 @@ const CONVERGE_MS = 2200;
 // Outer Ring Continuous Rotation Speed (rad/ms)
 const RING_SPIN_SPEED = 0.00016;
 
-// Terracotta Red color matching favicon (#bf4722)
+// Terracotta Red colors
 const ACC_R = 191, ACC_G = 71, ACC_B = 34;
+const GLOW_R = 235, GLOW_G = 95, GLOW_B = 45;
 
 interface Pt {
   x: number;
@@ -41,6 +43,8 @@ interface Thread {
   lw: number;
   alpha: number;
   isHooked: boolean;
+  isHovered: boolean;
+  hoverIntensity: number;
   hookPtIdx: number;
   isBroken: boolean;
   breakTime: number;
@@ -49,8 +53,23 @@ interface Thread {
   isOuterRing?: boolean;
 }
 
-export function ThreadRing({ className = "" }: { className?: string }) {
+interface ClickRipple {
+  x: number;
+  y: number;
+  t0: number;
+  radius: number;
+  maxRadius: number;
+}
+
+interface ThreadRingProps {
+  className?: string;
+  onHoverCoordinates?: (coords: { lat: string; lon: string; tension: number }) => void;
+}
+
+export function ThreadRing({ className = "", onHoverCoordinates }: ThreadRingProps) {
   const cvRef = useRef<HTMLCanvasElement>(null);
+  const onHoverRef = useRef(onHoverCoordinates);
+  onHoverRef.current = onHoverCoordinates;
 
   useEffect(() => {
     const cv = cvRef.current;
@@ -62,11 +81,13 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     const dpr = Math.min(devicePixelRatio || 1, 1.5);
     let W = 0, H = 0, cx = 0, cy = 0, R = 0;
     let threads: Thread[] = [];
+    let ripples: ClickRipple[] = [];
     let t0 = 0;
     let mx = -9999, my = -9999;
+    let smoothMx = -9999, smoothMy = -9999;
     let isPointerDown = false;
     let live = true;
-    let isVisibleInViewport = true; // Track visibility to pause animation loop when scrolled away
+    let isVisibleInViewport = true;
     let rafId = 0;
 
     // Mathematical 3D -> 2D Orthographic Globe Projection centered on India (16°N, 78°E)
@@ -155,6 +176,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           lw: lw + (Math.random() - 0.5) * 0.2,
           alpha: alpha + (Math.random() - 0.5) * 0.1,
           isHooked: false,
+          isHovered: false,
+          hoverIntensity: 0,
           hookPtIdx: Math.floor(subdivide / 2),
           isBroken: false,
           breakTime: 0,
@@ -213,6 +236,8 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           lw: 0.8 + Math.random() * 0.7,
           alpha: 0.45 + Math.random() * 0.35,
           isHooked: false,
+          isHovered: false,
+          hoverIntensity: 0,
           hookPtIdx: Math.floor(segs / 2),
           isBroken: false,
           breakTime: 0,
@@ -400,7 +425,21 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     };
 
     const updateHooks = (now: number) => {
-      if (!isPointerDown || mx < -500 || my < -500) {
+      // Smooth mouse coordinates
+      if (mx > -500 && my > -500) {
+        smoothMx += (mx - smoothMx) * 0.25;
+        smoothMy += (my - smoothMy) * 0.25;
+      }
+
+      // Check repair on broken threads
+      for (const th of threads) {
+        if (th.isBroken && now - th.breakTime > REPAIR_MS) {
+          th.isBroken = false;
+        }
+      }
+
+      // Unhook if pointer released
+      if (!isPointerDown) {
         for (const th of threads) {
           if (th.isHooked) {
             th.isHooked = false;
@@ -408,16 +447,10 @@ export function ThreadRing({ className = "" }: { className?: string }) {
             th.releasePt = { x: th.pts[th.hookPtIdx].x, y: th.pts[th.hookPtIdx].y };
           }
         }
-        return;
       }
 
       let activeHookCount = 0;
-      for (const th of threads) {
-        if (th.isHooked) activeHookCount++;
-        if (th.isBroken && now - th.breakTime > REPAIR_MS) {
-          th.isBroken = false;
-        }
-      }
+      let totalTension = 0;
 
       for (let i = 0; i < threads.length; i++) {
         const th = threads[i];
@@ -436,24 +469,76 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           }
         }
 
-        if (minDist < HOOK_RADIUS) {
-          if (!th.isHooked && activeHookCount < MAX_HOOKS) {
+        // Proximity hover detection (ALIVE WITHOUT CLICKING!)
+        if (minDist < HOVER_RADIUS && mx > -500) {
+          th.isHovered = true;
+          th.hoverIntensity = Math.max(0, 1 - minDist / HOVER_RADIUS);
+        } else {
+          th.isHovered = false;
+          th.hoverIntensity *= 0.85; // smooth fadeout
+        }
+
+        // Active dragging / hooking when pointer down
+        if (isPointerDown && minDist < HOOK_RADIUS && activeHookCount < MAX_HOOKS) {
+          if (!th.isHooked) {
             th.isHooked = true;
             th.hookPtIdx = nearestPtIdx;
-            activeHookCount++;
           }
+          activeHookCount++;
+          totalTension += minDist / HOOK_RADIUS;
         }
+      }
+
+      // Update telemetry callback if provided
+      if (onHoverRef.current && mx > -500 && my > -500 && R > 0) {
+        const dX = (mx - cx) / R;
+        const dY = (my - cy) / R;
+        const latEst = Math.max(-80, Math.min(80, 16.0 - dY * 45));
+        const lonEst = Math.max(-180, Math.min(180, 78.0 + dX * 55));
+        const tensionPct = Math.round(Math.min(100, (activeHookCount / MAX_HOOKS) * 100));
+        onHoverRef.current({
+          lat: `${Math.abs(latEst).toFixed(2)}° ${latEst >= 0 ? "N" : "S"}`,
+          lon: `${Math.abs(lonEst).toFixed(2)}° ${lonEst >= 0 ? "E" : "W"}`,
+          tension: tensionPct,
+        });
       }
     };
 
     const frame = (now: number) => {
-      if (!live || !isVisibleInViewport) return; // 0% CPU/GPU usage when scrolled away!
+      if (!live || !isVisibleInViewport) return;
       ctx.clearRect(0, 0, W, H);
 
       const elapsed = now - t0;
       updateHooks(now);
 
       const spinAngle = elapsed * RING_SPIN_SPEED;
+
+      // Draw subtle background ambient depth ring
+      const bgGrad = ctx.createRadialGradient(cx, cy, R * 0.1, cx, cy, R * 1.15);
+      bgGrad.addColorStop(0, "rgba(191, 71, 34, 0.04)");
+      bgGrad.addColorStop(0.7, "rgba(191, 71, 34, 0.015)");
+      bgGrad.addColorStop(1, "transparent");
+      ctx.fillStyle = bgGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 1.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Update and draw ripples
+      for (let rIdx = ripples.length - 1; rIdx >= 0; rIdx--) {
+        const rip = ripples[rIdx];
+        const age = now - rip.t0;
+        rip.radius += 3.2;
+        const ripAlpha = Math.max(0, (1 - rip.radius / rip.maxRadius) * 0.4);
+        if (ripAlpha <= 0.01) {
+          ripples.splice(rIdx, 1);
+          continue;
+        }
+        ctx.strokeStyle = `rgba(${GLOW_R},${GLOW_G},${GLOW_B},${ripAlpha.toFixed(3)})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       for (let i = 0; i < threads.length; i++) {
         const th = threads[i];
@@ -471,6 +556,7 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
         const N = th.pts.length;
 
+        // Snapping check when dragged too far
         if (th.isHooked && mx > -500) {
           const p = th.pts[th.hookPtIdx];
           const stretchDist = Math.hypot(mx - p.hx, my - p.hy);
@@ -513,9 +599,11 @@ export function ThreadRing({ className = "" }: { className?: string }) {
 
               p.x = targetHx + (mx - targetHx) * influence;
               p.y = targetHy + (my - targetHy) * influence;
-            } else if (th.releasePt && now - th.dragReleaseTime < 600) {
-              const relProgress = (now - th.dragReleaseTime) / 600;
-              const easeReturn = Math.pow(1 - relProgress, 2);
+            } else if (th.releasePt && now - th.dragReleaseTime < 800) {
+              // Harmonic plucked string vibration on release!
+              const timeSince = (now - th.dragReleaseTime);
+              const decay = Math.exp(-timeSince * 0.006);
+              const oscillation = Math.cos(timeSince * 0.045) * decay;
 
               const hookIdx = th.hookPtIdx;
               const distFromHook = Math.abs(s - hookIdx) / N;
@@ -524,8 +612,18 @@ export function ThreadRing({ className = "" }: { className?: string }) {
               const startOffsetPtX = th.releasePt.x - targetHx;
               const startOffsetPtY = th.releasePt.y - targetHy;
 
-              p.x = targetHx + startOffsetPtX * influence * easeReturn;
-              p.y = targetHy + startOffsetPtY * influence * easeReturn;
+              p.x = targetHx + startOffsetPtX * influence * oscillation;
+              p.y = targetHy + startOffsetPtY * influence * oscillation;
+            } else if (th.isHovered && th.hoverIntensity > 0.05 && mx > -500) {
+              // Reactive Hover Silk Wave displacement
+              const dx = targetHx - mx;
+              const dy = targetHy - my;
+              const dist = Math.hypot(dx, dy);
+              const repel = Math.max(0, (1 - dist / HOVER_RADIUS)) * 12 * th.hoverIntensity;
+              const angle = Math.atan2(dy, dx);
+
+              p.x = targetHx + Math.cos(angle) * repel;
+              p.y = targetHy + Math.sin(angle) * repel;
             } else {
               p.x = targetHx;
               p.y = targetHy;
@@ -533,11 +631,23 @@ export function ThreadRing({ className = "" }: { className?: string }) {
           }
         }
 
-        const opacity = Math.min(th.alpha * Math.min(rawProgress * 1.5, 1), 0.95);
-        ctx.strokeStyle = `rgba(${ACC_R},${ACC_G},${ACC_B},${opacity.toFixed(3)})`;
-        ctx.lineWidth = th.isHooked ? th.lw * 1.6 : th.lw;
-        ctx.lineCap = "round";
+        // Dynamic styling: highlighted glow when hovered or hooked
+        const baseOpacity = Math.min(th.alpha * Math.min(rawProgress * 1.5, 1), 0.95);
+        const hoverBoost = th.hoverIntensity * 0.35;
+        const opacity = Math.min(0.98, baseOpacity + hoverBoost);
 
+        if (th.isHooked) {
+          ctx.strokeStyle = `rgba(${GLOW_R},${GLOW_G},${GLOW_B},0.98)`;
+          ctx.lineWidth = th.lw * 1.9;
+        } else if (th.isHovered && th.hoverIntensity > 0.1) {
+          ctx.strokeStyle = `rgba(${GLOW_R},${GLOW_G},${GLOW_B},${opacity.toFixed(3)})`;
+          ctx.lineWidth = th.lw * (1 + th.hoverIntensity * 0.6);
+        } else {
+          ctx.strokeStyle = `rgba(${ACC_R},${ACC_G},${ACC_B},${opacity.toFixed(3)})`;
+          ctx.lineWidth = th.lw;
+        }
+
+        ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(th.pts[0].x, th.pts[0].y);
 
@@ -548,12 +658,21 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         }
         ctx.lineTo(th.pts[N - 1].x, th.pts[N - 1].y);
         ctx.stroke();
+
+        // Draw luminous spark vertices on hovered or hooked thread points
+        if ((th.isHooked || th.hoverIntensity > 0.5) && th.pts[th.hookPtIdx]) {
+          const hp = th.pts[th.hookPtIdx];
+          ctx.fillStyle = `rgba(255, 240, 220, ${(0.8 * th.hoverIntensity).toFixed(2)})`;
+          ctx.beginPath();
+          ctx.arc(hp.x, hp.y, 2.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       rafId = requestAnimationFrame(frame);
     };
 
-    // IntersectionObserver: Pause canvas animation loop when hero is out of view!
+    // IntersectionObserver: Pause canvas animation loop when hero is out of view
     const observer = new IntersectionObserver(
       ([entry]) => {
         const inView = entry.isIntersecting;
@@ -574,15 +693,30 @@ export function ThreadRing({ className = "" }: { className?: string }) {
       const r = cv.getBoundingClientRect();
       mx = e.clientX - r.left;
       my = e.clientY - r.top;
+      if (smoothMx < -500) {
+        smoothMx = mx;
+        smoothMy = my;
+      }
     };
 
     const onPointerDown = (e: PointerEvent) => {
       isPointerDown = true;
       updateMousePos(e);
+      // Spawn tactile sonar ripple wave on click!
+      ripples.push({
+        x: mx,
+        y: my,
+        t0: performance.now(),
+        radius: 6,
+        maxRadius: Math.min(W, H) * 0.65,
+      });
     };
+    
+    // Pointermove tracks ALWAYS for live hover responsiveness!
     const onPointerMove = (e: PointerEvent) => {
-      if (isPointerDown) updateMousePos(e);
+      updateMousePos(e);
     };
+
     const onPointerUp = () => {
       isPointerDown = false;
       for (const th of threads) {
@@ -593,11 +727,18 @@ export function ThreadRing({ className = "" }: { className?: string }) {
         }
       }
     };
+
     const onPointerLeave = () => {
       isPointerDown = false;
       mx = -9999;
       my = -9999;
-      for (const th of threads) th.isHooked = false;
+      smoothMx = -9999;
+      smoothMy = -9999;
+      for (const th of threads) {
+        th.isHooked = false;
+        th.isHovered = false;
+        th.hoverIntensity = 0;
+      }
     };
 
     cv.addEventListener("pointerdown", onPointerDown);
@@ -625,9 +766,10 @@ export function ThreadRing({ className = "" }: { className?: string }) {
     <canvas
       ref={cvRef}
       className={`block w-full h-full ${className}`}
-      style={{ cursor: "grab", touchAction: "none" }}
-      aria-label="High-performance 2D red thread Earth map — automatically pauses animation loop when scrolled out of view for zero CPU/GPU website lag"
+      style={{ cursor: "crosshair", touchAction: "none" }}
+      aria-label="Interactive 2D Red Thread Earth Map — hover to ripple threads, click and drag to pull and snap threads elastically"
       role="img"
     />
   );
 }
+

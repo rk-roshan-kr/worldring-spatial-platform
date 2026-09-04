@@ -94,23 +94,11 @@ body {
   html {
     scroll-behavior: auto;
   }
-  html.js [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-}
-/* Reveal-on-scroll: assemble and disassemble elements as they enter/exit view */
-html.js [data-reveal] {
-  opacity: 0;
-  transform: translateY(18px) scale(0.99);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
 }
 
-html.js [data-reveal].is-in {
-  opacity: 1;
-  transform: translateY(0) scale(1);
+/* Base utility for smooth motion elements */
+[data-reveal] {
+  will-change: opacity, transform;
 }
 
 /* Type helpers */
@@ -322,134 +310,105 @@ html.js [data-reveal].is-in {
   display: none; /* Chrome/Safari */
 }
 
-/* Snapping only on screen widths >= 1024px AND heights >= 700px */
-@media (min-width: 1024px) and (min-height: 700px) {
-  html, body {
-    overflow: hidden !important;
-    height: 100% !important;
-  }
-  #snap-container {
-    scroll-snap-type: y mandatory;
-    scroll-padding-top: 4.5rem;
-    height: 100vh;
-    overflow-y: auto;
-    
-    /* Repeating Blueprint Grid (Light Theme) */
-    background-color: var(--paper);
-    background-image: 
-      linear-gradient(to right, rgba(27, 23, 18, 0.02) 1.5px, transparent 1.5px),
-      linear-gradient(to bottom, rgba(27, 23, 18, 0.02) 1.5px, transparent 1.5px);
-    background-size: 40px 40px;
-  }
+/* ==========================================================================
+   FLUID NATURAL SCROLLING & BLUEPRINT CANVAS
+   Replaced rigid scroll-snapping with natural momentum scrolling
+   to prevent content clipping and viewport lock-in.
+   ========================================================================== */
+html, body {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+#snap-container {
+  width: 100%;
+  min-height: 100vh;
+  /* Repeating Blueprint Grid (Light Theme) */
+  background-color: var(--paper);
+  background-image: 
+    linear-gradient(to right, rgba(27, 23, 18, 0.02) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(27, 23, 18, 0.02) 1.5px, transparent 1.5px);
+  background-size: 40px 40px;
+}
+
+.section-snap-wrap {
+  width: 100%;
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 4.5rem;
+  padding-bottom: 3.5rem;
+  scroll-margin-top: 4.5rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
   .section-snap-wrap {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding-top: 5.5rem !important;
-    padding-bottom: 2.5rem !important;
-  }
-  
-  /* Repeating Blueprint Grid (Dark Theme Section Overrides) */
-  .section-snap-wrap.bg-inv-bg {
-    background-color: var(--inv-bg) !important;
-    background-image: 
-      linear-gradient(to right, rgba(250, 248, 243, 0.015) 1.5px, transparent 1.5px),
-      linear-gradient(to bottom, rgba(250, 248, 243, 0.015) 1.5px, transparent 1.5px) !important;
-    background-size: 40px 40px !important;
+    min-height: 100dvh;
+    padding-top: 5rem;
+    padding-bottom: 4rem;
+    scroll-margin-top: 5rem;
   }
 }
 
-/* Fallback for short screens or mobile/tablets */
-@media (max-width: 1023px), (max-height: 699px) {
-  #snap-container {
-    scroll-snap-type: none;
-    height: auto;
-    overflow-y: visible;
-  }
-  .section-snap-wrap {
-    scroll-snap-align: none;
-    min-height: auto;
-  }
+/* First section (Hero): fill viewport cleanly and center content */
+.section-snap-wrap:first-of-type {
+  justify-content: center;
+  padding-top: 4.5rem;
+  padding-bottom: 2.5rem;
 }
 
-/* Staggered mechanical horizontal and vertical transitions (no opacity fades) for snap viewports */
-@media (min-width: 1024px) and (min-height: 700px) {
-  
-  /* 1. SLIDE DOWN (Indices and Kickers) */
-  .section-snap-wrap .sec-num,
-  .section-snap-wrap .kicker {
-    transform: translateY(-20px) scale(0.98);
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
-    transition-delay: 0s !important; /* Fast exit */
-  }
-
-  /* 2. SLIDE UP (Texts: Headings, paragraphs, blockquotes, buttons, bullets) */
-  .section-snap-wrap h1,
-  .section-snap-wrap h2,
-  .section-snap-wrap p,
-  .section-snap-wrap blockquote,
-  .section-snap-wrap button,
-  .section-snap-wrap .btn,
-  .section-snap-wrap li {
-    transform: translateY(24px);
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
-    transition-delay: 0s !important; /* Fast exit */
-  }
-
-  /* 3. SLIDE LEFT (Data: Grids, maps, schemas, timelines) */
-  .section-snap-wrap [data-reveal],
-  .section-snap-wrap .grid > *,
-  .section-snap-wrap table {
-    transform: translateX(65px);
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
-    transition-delay: 0s !important; /* Fast exit */
-  }
-
-  /* Active states (.is-in) triggers slide-in from sides */
-  
-  /* Slide Down: Section indicators & kickers */
-  .section-snap-wrap.is-in .sec-num,
-  .section-snap-wrap.is-in .kicker {
-    transform: translateY(0) scale(1);
-    transition-delay: 0.1s !important;
-  }
-
-  /* Slide Up: Headings */
-  .section-snap-wrap.is-in h1,
-  .section-snap-wrap.is-in h2 {
-    transform: translateY(0);
-    transition-delay: 0.25s !important;
-  }
-
-  /* Slide Up: Body copy / blockquotes */
-  .section-snap-wrap.is-in p,
-  .section-snap-wrap.is-in blockquote {
-    transform: translateY(0);
-    transition-delay: 0.4s !important;
-  }
-
-  /* Slide Left: Data panels, grids, tables */
-  .section-snap-wrap.is-in [data-reveal],
-  .section-snap-wrap.is-in .grid > *,
-  .section-snap-wrap.is-in table {
-    transform: translateX(0);
-    transition-delay: 0.55s !important;
-  }
-
-  /* Slide Up: CTAs & list item bullets */
-  .section-snap-wrap.is-in button,
-  .section-snap-wrap.is-in .btn,
-  .section-snap-wrap.is-in li {
-    transform: translateY(0);
-    transition-delay: 0.85s !important;
-  }
+/* Repeating Blueprint Grid (Dark Theme Section Overrides) */
+.section-snap-wrap.bg-inv-bg {
+  background-color: var(--inv-bg) !important;
+  background-image: 
+    linear-gradient(to right, rgba(250, 248, 243, 0.015) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(250, 248, 243, 0.015) 1.5px, transparent 1.5px) !important;
+  background-size: 40px 40px !important;
 }
+
+/* ==========================================================================
+   NETLIFY BADGE & DRAWER ELIMINATION
+   Guarantees no "Powered by Netlify" or feedback widget renders on screen
+   ========================================================================== */
+#netlify-badge,
+.netlify-badge,
+#netlify-drawer,
+.netlify-drawer,
+[data-netlify-drawer],
+[data-netlify-deploy-id],
+iframe[src*="netlify"],
+iframe[title*="Netlify" i],
+iframe[id*="netlify"],
+iframe[class*="netlify"],
+div[id*="netlify-badge"],
+div[class*="netlify-badge"],
+div:has(> iframe[src*="netlify"]),
+div:has(> iframe[title*="Netlify" i]),
+a[href*="netlify.com"][class*="badge"],
+a[href*="netlify.com"][style*="fixed"],
+button[aria-label*="Netlify" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  bottom: -9999px !important;
+  z-index: -9999 !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+}
+
 
 
 /* Dynamic Root Font-Size Scaling for desktop viewports based on screen height */
@@ -491,11 +450,6 @@ html.js [data-reveal].is-in {
   #snap-container {
     scroll-snap-type: none !important;
     scroll-behavior: auto !important;
-  }
-  html.js [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
   }
   .scanline-sweep {
     display: none !important;

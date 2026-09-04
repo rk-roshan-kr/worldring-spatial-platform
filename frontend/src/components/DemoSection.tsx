@@ -1209,109 +1209,9 @@ export function DemoSection() {
   const [progress, setProgress] = useState(0);
   const [inView, setInView] = useState(false);
   const [hold, setHold] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingProgress, setRecordingProgress] = useState(0);
   const plateRef = useRef<HTMLDivElement | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reduced = useRef(false);
-
-  const handleExportVideo = async () => {
-    if (isRecording || !plateRef.current) return;
-    const svgEl = plateRef.current.querySelector("svg");
-    if (!svgEl) return;
-
-    setIsRecording(true);
-    setRecordingProgress(0);
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1920;
-      canvas.height = 1076;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const stream = canvas.captureStream(60);
-      let mimeType = "video/webm;codecs=vp9";
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = "video/webm";
-      }
-
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 10000000 });
-      const chunks: Blob[] = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-
-      const recordPromise = new Promise<string>((resolve) => {
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: mimeType });
-          const url = URL.createObjectURL(blob);
-          resolve(url);
-        };
-      });
-
-      recorder.start();
-
-      const startTime = performance.now();
-      const DURATION = 60000; // Exactly 60,000 ms (60 seconds)
-
-      await new Promise<void>((resolve) => {
-        const renderFrame = () => {
-          const elapsed = performance.now() - startTime;
-          const currentProgress = Math.min(1, elapsed / DURATION);
-          setProgress(currentProgress);
-          setRecordingProgress(currentProgress * 100);
-
-          const xml = new XMLSerializer().serializeToString(svgEl);
-          const svgBlob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
-          const url = URL.createObjectURL(svgBlob);
-
-          const img = new Image();
-          img.onload = () => {
-            ctx.fillStyle = "#faf8f3";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            URL.revokeObjectURL(url);
-
-            if (elapsed < DURATION) {
-              requestAnimationFrame(renderFrame);
-            } else {
-              setProgress(1.0);
-              setRecordingProgress(100);
-              resolve();
-            }
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(url);
-            if (elapsed < DURATION) {
-              requestAnimationFrame(renderFrame);
-            } else {
-              resolve();
-            }
-          };
-          img.src = url;
-        };
-
-        requestAnimationFrame(renderFrame);
-      });
-
-      recorder.stop();
-      const videoUrl = await recordPromise;
-
-      const a = document.createElement("a");
-      a.href = videoUrl;
-      a.download = "earthos_lab_60s_one_shot.webm";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(videoUrl);
-    } catch (err) {
-      console.error("Video recording error:", err);
-    } finally {
-      setIsRecording(false);
-    }
-  };
 
   useEffect(() => {
     reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1431,6 +1331,37 @@ export function DemoSection() {
           </div>
 
           <div className="mt-4">
+            {/* Quick-jump Chapters */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="font-mono text-[0.6rem] uppercase tracking-wider text-muted font-bold mr-1">
+                SEQUENCE:
+              </span>
+              {[
+                { label: "01 · Drone Survey (0s)", t: 0 },
+                { label: "02 · SfM Pipeline (28s)", t: 28 / TOTAL },
+                { label: "03 · Route Planner (37s)", t: 37 / TOTAL },
+                { label: "04 · Street POV (42s)", t: 42 / TOTAL },
+              ].map((ch) => {
+                const isActive = Math.abs(progress - ch.t) < 0.08;
+                return (
+                  <button
+                    key={ch.label}
+                    onClick={() => {
+                      onScrub(ch.t);
+                      onScrubEnd();
+                    }}
+                    className={`px-2.5 py-1 rounded border font-mono text-[0.62rem] uppercase tracking-wider transition-colors cursor-pointer ${
+                      isActive
+                        ? "bg-accent text-white border-accent font-semibold"
+                        : "bg-paper-deep/70 hover:bg-paper-deep text-ink border-line-strong/60"
+                    }`}
+                  >
+                    {ch.label}
+                  </button>
+                );
+              })}
+            </div>
+
             <input
               type="range"
               min={0}
@@ -1446,27 +1377,7 @@ export function DemoSection() {
             />
             <div className="mt-1.5 flex flex-col md:flex-row items-center justify-between gap-1.5 font-mono text-[0.56rem] uppercase tracking-[0.2em] text-muted">
               <span>One continuous take · {Math.round(TOTAL)}s · 60 FPS · loops</span>
-              <span>PROGRESS: {(progress * 100).toFixed(1)}%</span>
-            </div>
-
-            {/* Export 60s Video Controls */}
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line/60">
-              <div className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
-                {isRecording ? (
-                  <span className="text-accent font-bold animate-pulse">
-                    RECORDING VIDEO &bull; {recordingProgress.toFixed(0)}%
-                  </span>
-                ) : (
-                  <span>60s One-Shot Kinematic Sequence &bull; 1080p WebM / MP4</span>
-                )}
-              </div>
-              <button
-                onClick={handleExportVideo}
-                disabled={isRecording}
-                className="px-4 py-2 rounded bg-ink hover:bg-accent text-paper font-mono text-[0.68rem] uppercase tracking-[0.14em] font-semibold transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {isRecording ? `Encoding Video ${recordingProgress.toFixed(0)}%...` : "🎬 Export 60s Video"}
-              </button>
+              <span className="font-bold text-accent">PROGRESS: {(progress * 100).toFixed(1)}%</span>
             </div>
           </div>
         </div>

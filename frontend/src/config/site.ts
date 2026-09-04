@@ -20,9 +20,10 @@ export const SITE = {
 
   nav: [
     { num: "01", label: "Overview", href: "#top" },
-    { num: "02", label: "Thesis", href: "#thesis" },
-    { num: "03", label: "Data Wing", href: "#data" },
-    { num: "04", label: "Capital", href: "#capital" },
+    { num: "02", label: "The Gap", href: "#gap" },
+    { num: "03", label: "Thesis", href: "#thesis" },
+    { num: "04", label: "Data Wing", href: "#data" },
+    { num: "05", label: "Capital", href: "#capital" },
   ],
 
   gap: {

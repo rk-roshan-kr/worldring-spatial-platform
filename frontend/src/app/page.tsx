@@ -33,7 +33,7 @@ export default function Home() {
       
       <main
         id="snap-container"
-        className="w-full flex-1 flex flex-col lg:h-screen lg:overflow-y-auto lg:snap-y lg:snap-mandatory scroll-smooth scrollbar-none snap-y select-none relative overflow-x-hidden"
+        className="w-full flex-1 flex flex-col scroll-smooth relative overflow-x-hidden"
       >
         <KeyboardScrollHandler />
         <PageScrollerDots />
@@ -84,14 +84,10 @@ export default function Home() {
         </div>
 
         {/* 10 — The Final Screen & Investor Actions */}
-        <div className="section-snap-wrap w-full shrink-0 relative">
-          <CtaBand onOpenContact={handleOpenContact} />
-        </div>
+        <CtaBand onOpenContact={handleOpenContact} />
 
         {/* 11 — Footer */}
-        <div className="section-snap-wrap w-full shrink-0 relative">
-          <SiteFooter />
-        </div>
+        <SiteFooter />
       </main>
 
       <ContactModal

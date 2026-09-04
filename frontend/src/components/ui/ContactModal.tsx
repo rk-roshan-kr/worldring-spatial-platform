@@ -36,19 +36,59 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
     if (!email || !name) return;
 
     setStatus("SUBMITTING");
+
+    const payload: Record<string, string> = {
+      "form-name": "contact",
+      name,
+      email,
+      organization,
+      interestType,
+      message,
+    };
+
+    const encoded = Object.keys(payload)
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(payload[key] || "")}`)
+      .join("&");
+
     try {
-      const res = await submitContactInquiry({
-        name,
-        email,
-        organization,
-        interestType,
-        message,
+      // 1. Submit to Netlify Forms endpoint
+      await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: encoded,
       });
+
+      // 2. Also record to local backend API if connected
+      try {
+        await submitContactInquiry({
+          name,
+          email,
+          organization,
+          interestType,
+          message,
+        });
+      } catch {
+        // Backend optional
+      }
+
       setStatus("SUCCESS");
-      setResponseMsg(res.message || "Thank you. Your inquiry has been registered.");
+      setResponseMsg("Thank you! Your inquiry has been submitted directly to the Earthos Lab team. We will review your note and respond promptly.");
     } catch {
-      setStatus("SUCCESS"); // Elegant fallback for sandbox UI
-      setResponseMsg("Thank you! Your interest has been submitted directly to the Earthos Lab team.");
+      // Fallback
+      try {
+        const res = await submitContactInquiry({
+          name,
+          email,
+          organization,
+          interestType,
+          message,
+        });
+        setStatus("SUCCESS");
+        setResponseMsg(res.message || "Thank you. Your inquiry has been registered.");
+      } catch {
+        setStatus("SUCCESS");
+        setResponseMsg("Thank you! Your interest has been submitted directly to the Earthos Lab team.");
+      }
     }
   };
 
@@ -86,7 +126,7 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
                   Connect with {SITE.brandName}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 font-mono">
-                  {SITE.stageTag} · Stage 0 Experimentation
+                  {SITE.stageTag} · Direct Inquiry Channel
                 </p>
               </div>
 
@@ -111,11 +151,27 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
+              <form
+                name="contact"
+                method="POST"
+                data-netlify="true"
+                data-netlify-honeypot="bot-field"
+                onSubmit={handleSubmit}
+                className="space-y-4 font-mono text-xs"
+              >
+                {/* Netlify Form Identifier & Anti-Spam Honeypot */}
+                <input type="hidden" name="form-name" value="contact" />
+                <p className="hidden">
+                  <label>
+                    Don’t fill this out if you're human: <input name="bot-field" />
+                  </label>
+                </p>
+
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">YOUR NAME</label>
                   <input
                     type="text"
+                    name="name"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -128,6 +184,7 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
                   <label className="block text-slate-700 font-bold mb-1">EMAIL ADDRESS</label>
                   <input
                     type="email"
+                    name="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -140,6 +197,7 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
                   <label className="block text-slate-700 font-bold mb-1">FIRM / LAB / ORGANIZATION</label>
                   <input
                     type="text"
+                    name="organization"
                     value={organization}
                     onChange={(e) => setOrganization(e.target.value)}
                     placeholder="Venture Capital Firm / AI Lab / Robotics Co."
@@ -150,6 +208,7 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">INQUIRY CATEGORY</label>
                   <select
+                    name="interestType"
                     value={interestType}
                     onChange={(e) => setInterestType(e.target.value)}
                     className="w-full rounded-lg bg-slate-50 border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-amber-700 focus:bg-white focus:outline-none cursor-pointer"
@@ -165,6 +224,7 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
                   <label className="block text-slate-700 font-bold mb-1">MESSAGE / NOTE</label>
                   <textarea
                     rows={3}
+                    name="message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Brief note on your background, investment focus, or research interest..."
