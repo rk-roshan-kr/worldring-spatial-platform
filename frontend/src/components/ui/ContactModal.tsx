@@ -46,16 +46,12 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
       message,
     };
 
-    const encoded = Object.keys(payload)
-      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(payload[key] || "")}`)
-      .join("&");
-
     try {
       // 1. Submit to Netlify Forms endpoint
       await fetch("/", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: encoded,
+        body: new URLSearchParams(payload).toString(),
       });
 
       // 2. Also record to local backend API if connected
