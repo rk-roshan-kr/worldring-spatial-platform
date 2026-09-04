@@ -48,7 +48,7 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
 
     try {
       // 1. Submit to Netlify Forms endpoint
-      await fetch("/", {
+      await fetch("/__forms.html", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(payload).toString(),
