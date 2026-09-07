@@ -105,14 +105,6 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
             >
               {SITE.brandName}
             </motion.span>
-            <div className="hidden xl:flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-line bg-paper-deep/60 font-mono text-[0.58rem] text-muted tracking-wider">
-              <motion.span
-                className="w-1.5 h-1.5 rounded-full bg-accent"
-                animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <span>STAGE 0 LIVE</span>
-            </div>
           </a>
 
           {/* Desktop nav with Motion sliding pill */}
