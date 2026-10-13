@@ -91,8 +91,8 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
       <header
         className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ${
           scrolled
-            ? "border-line/80 bg-paper/90 backdrop-blur-md shadow-xs"
-            : "border-transparent bg-paper/70 backdrop-blur-xs"
+            ? "border-line bg-paper/90 backdrop-blur-md"
+            : "border-transparent bg-paper/50 backdrop-blur-xs"
         }`}
       >
         <div className="mx-auto max-w-[76rem] px-(--gutter) py-3 flex items-center justify-between gap-4">
@@ -108,7 +108,7 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
           </a>
 
           {/* Desktop nav with Motion sliding pill */}
-          <nav aria-label="Primary" className="hidden lg:flex items-center gap-1 bg-paper-deep/50 p-1 rounded-full border border-line/60">
+          <nav aria-label="Primary" className="hidden lg:flex items-center gap-1 bg-paper-deep/60 p-1 rounded-full border border-line">
             {SITE.nav.map((item) => {
               const isActive = active === item.href;
               return (
@@ -123,7 +123,7 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
                   {isActive && (
                     <motion.span
                       layoutId="activeNavIndicator"
-                      className="absolute inset-0 bg-paper rounded-full shadow-xs border border-line-strong/40"
+                      className="absolute inset-0 bg-accent/10 rounded-full border border-accent/20"
                       transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     />
                   )}
@@ -139,7 +139,7 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
               whileHover={{ scale: 1.03, boxShadow: "0 4px 14px rgba(191, 71, 34, 0.2)" }}
               whileTap={{ scale: 0.97 }}
               onClick={onOpenContact}
-              className="btn btn-solid !py-2 cursor-pointer whitespace-nowrap shadow-xs"
+              className="btn btn-solid !py-2 cursor-pointer whitespace-nowrap"
             >
               Get in touch
             </motion.button>
@@ -178,7 +178,7 @@ export function SiteNav({ onOpenContact }: { onOpenContact?: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-40 bg-paper flex flex-col pt-[3.75rem] lg:hidden"
+            className="fixed inset-0 z-40 bg-paper/95 backdrop-blur-xl flex flex-col pt-[3.75rem] lg:hidden"
             role="dialog"
             aria-label="Navigation"
           >

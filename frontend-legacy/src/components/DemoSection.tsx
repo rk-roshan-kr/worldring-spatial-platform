@@ -1224,7 +1224,7 @@ export function DemoSection() {
       (entries) => {
         for (const e of entries) setInView(e.isIntersecting);
       },
-      { threshold: 0.35 }
+      { threshold: 0.15 }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -1302,16 +1302,8 @@ export function DemoSection() {
                 </radialGradient>
                 <radialGradient id="vig" cx="50%" cy="50%" r="72%">
                   <stop offset="55%" stopColor="#000000" stopOpacity="0" />
-                  <stop offset="100%" stopColor="#000000" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
                 </radialGradient>
-                <filter id="grain">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
-                  <feColorMatrix type="saturate" values="0" />
-                  <feComponentTransfer>
-                    <feFuncA type="linear" slope="0.06" />
-                  </feComponentTransfer>
-                  <feComposite operator="over" in2="SourceGraphic" />
-                </filter>
               </defs>
 
               <rect x="0" y="0" width={W} height={H} fill="url(#sky)" />
@@ -1325,7 +1317,6 @@ export function DemoSection() {
                 {scene === "exit" && <ExitSequence s={s} />}
               </g>
 
-              {grain > 0 && <rect x="0" y="0" width={W} height={H} filter="url(#grain)" opacity={grain} />}
               <rect x="0" y="0" width={W} height={H} fill="url(#vig)" opacity={0.35} />
             </svg>
           </div>
@@ -1334,13 +1325,13 @@ export function DemoSection() {
             {/* Quick-jump Chapters */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <span className="font-mono text-[0.6rem] uppercase tracking-wider text-muted font-bold mr-1">
-                SEQUENCE:
+                PIPELINE STAGES:
               </span>
               {[
-                { label: "01 · Drone Survey (0s)", t: 0 },
-                { label: "02 · SfM Pipeline (28s)", t: 28 / TOTAL },
-                { label: "03 · Route Planner (37s)", t: 37 / TOTAL },
-                { label: "04 · Street POV (42s)", t: 42 / TOTAL },
+                { label: "01 · Corridor Optical Survey (0s)", t: 0 },
+                { label: "02 · 3D SfM Reconstruction (28s)", t: 28 / TOTAL },
+                { label: "03 · Navigable Route Graph (37s)", t: 37 / TOTAL },
+                { label: "04 · Street-Level Arrival POV (42s)", t: 42 / TOTAL },
               ].map((ch) => {
                 const isActive = Math.abs(progress - ch.t) < 0.08;
                 return (

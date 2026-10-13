@@ -1,51 +1,53 @@
 export const SITE = {
-  brandName: "Earthos Lab",
-  stageTag: "Prototype / Ideation Stage",
-  contactEmail: "hello@earthoslab.example",
+  brandName: "WorldRing",
+  stageTag: "Chandigarh Field Benchmark",
+  contactEmail: "hello@worldring.xyz",
 
   hero: {
-    kicker: "01 — The World",
+    kicker: "Spatial Intelligence Infrastructure",
     headline: "The physical world is becoming the next data layer.",
-    subhead: "The internet mapped the digital world. We are exploring the physical one.",
-    lede: "We're building a pipeline that converts low-cost 360° street video into structured, navigable 3D spatial data — connecting optical observation to human route previews and machine physical-AI infrastructure. Prototype & ideation stage.",
-    primaryCta: { label: "Fund Prototype Capital", href: "#capital" },
-    secondaryCta: { label: "Technical Thesis & Demo", href: "#demo" },
+    subhead: "The internet mapped the digital world. We are reconstructing the physical one.",
+    lede: "Traditional maps reduce reality to flat pins on arterial roads. We are building a computer vision pipeline that turns commodity 360° optical capture into continuous, structured 3D spatial environments — giving humans visual arrival previews for the final 100 meters, and providing autonomous machines with rich physical-AI navigation priors. Without $300,000 LiDAR fleets.",
+    primaryCta: { label: "Discuss Prototype Investment", href: "#capital" },
+    secondaryCta: { label: "Explore The Corridor Demo ↓", href: "#demo" },
     meta: [
       "30.7333° N / 76.7794° E",
-      "Chandigarh · First Field Sector",
-      "Stage 0 Hypothesis Validation",
-      "v0.1.5 Technical Sandbox",
+      "Sector 17, Chandigarh · Field Benchmark",
+      "Commodity Dual-Lens Optical Pipeline",
+      "< 2% Cost of Survey LiDAR Vehicles",
     ],
   },
 
   nav: [
-    { num: "01", label: "Overview", href: "#top" },
+    { num: "01", label: "The Vision", href: "#top" },
     { num: "02", label: "The Gap", href: "#gap" },
-    { num: "03", label: "Thesis", href: "#thesis" },
-    { num: "04", label: "Data Wing", href: "#data" },
-    { num: "05", label: "Capital", href: "#capital" },
+    { num: "03", label: "Pipeline", href: "#thesis" },
+    { num: "04", label: "Corridor Demo", href: "#demo" },
+    { num: "05", label: "Physical AI", href: "#data" },
+    { num: "06", label: "Sector Pilot", href: "#proving" },
+    { num: "07", label: "Capital Ask", href: "#capital" },
   ],
 
   gap: {
     heading: "We have mapped the world in coordinates. But coordinates aren't the world.",
     intro:
-      "Coordinates tell you where a pin lands. They don't communicate what you'll see upon arrival or how the final approach will unfold — stranded 120 meters away on an arterial road with no visual cues for the last turn.",
+      "A GPS coordinate only tells you where a pin lands on paper. It cannot tell you what you'll see upon arrival, where the pedestrian arcade begins, or which courtyard alley leads to the actual entrance — leaving people and delivery rovers stranded 120 meters away on an arterial road.",
     formal: [
       { term: "Sector", detail: "Sector 17-C" },
       { term: "Road", detail: "Inner Loop Road 4" },
       { term: "Unit", detail: "Shop B-14 / Block 2" },
-      { term: "GPS pin", detail: "Stops 120 m away on the arterial", warn: true },
+      { term: "GPS pin", detail: "Stops 120 m away on the 4-lane arterial", warn: true },
     ],
     formalVerdict:
-      "Coordinates pinpoint a theoretical spot on paper. On the ground, they leave humans and mobile systems searching for final-meter context.",
+      "Coordinates pinpoint a theoretical spot on paper. In dense or multi-level urban sectors, they leave humans and mobile systems searching for final-meter context.",
     landmarkSteps: [
       {
-        title: "Pass the roundabout monument.",
-        detail: "Orient north, take the first pedestrian walkway right.",
+        title: "Pass the central monument fountain.",
+        detail: "Orient north and take the shaded pedestrian walkway on the right.",
       },
       {
         title: "Follow shaded storefronts",
-        detail: "about 150 m to the cobalt-blue commercial complex.",
+        detail: "about 150 m past the post office complex into the open courtyard.",
       },
       {
         title: "Fourth shop on the right",
@@ -53,132 +55,132 @@ export const SITE = {
       },
     ],
     landmarkVerdict:
-      "This matches what your eyes see on the street. It's how directions are given — and what we want spatial software to understand.",
+      "This matches what eyes and cameras see on the street. It's how directions are given — and what spatial intelligence must understand.",
   },
 
   thesis: {
-    heading: "What if ordinary optical observations could become a structured representation of reality?",
+    heading: "From raw optical video to structured 3D spatial reality in four steps.",
     intro:
-      "Instead of deploying capital-intensive LiDAR fleets, we test whether consumer-grade 360° video, supplemented by low-cost GNSS/IMU sensors, can generate structured 3D spatial representations at a fraction of traditional mapping costs.",
+      "Instead of deploying capital-intensive LiDAR fleets, we prove that commodity 360° video, combined with visual-inertial odometry, can reconstruct centimeter-accurate 3D spatial environments at a fraction of traditional surveying costs.",
     pipeline: [
-      { step: "01", name: "Observe", desc: "Low-cost panoramic 360° video streams", tag: "5.7K optical rig" },
-      { step: "02", name: "Trajectory", desc: "Visual-inertial SfM & 6-DOF camera splines", tag: "Pose estimation" },
-      { step: "03", name: "Reconstruct", desc: "Neural radiance fields & Gaussian Splatting", tag: "Point cloud + mesh" },
-      { step: "04", name: "Privacy", desc: "Automated face & license plate blurring", tag: "PII anonymization" },
-      { step: "05", name: "Structure", desc: "Semantic layer extraction & surface fitting", tag: "7-layer schema" },
-      { step: "06", name: "Deploy", desc: "Human route previews & physical-AI APIs", tag: "Spatial infrastructure" },
+      { step: "01", name: "Panoramic Capture", desc: "Dual-lens 5.7K optical rigs mounted on everyday bikes, cars, or carts (< $500 total hardware)", tag: "Commodity Optical" },
+      { step: "02", name: "Trajectory & Pose", desc: "Visual-inertial SfM solves continuous 6-DOF camera splines with loop closure across the corridor", tag: "Pose Splines" },
+      { step: "03", name: "3D Reconstruction", desc: "Continuous photometric optimization and Gaussian Splatting generate metric depth and point clouds", tag: "Dense Geometry" },
+      { step: "04", name: "Privacy Redaction", desc: "Automated on-device neural anonymization of faces, license plates, and private identifiers", tag: "PII Compliant" },
+      { step: "05", name: "Semantic Structuring", desc: "Separating walkable walkways, curb heights, building envelopes, and visual landmark cues", tag: "Vector Strata" },
+      { step: "06", name: "Dual Deployment", desc: "Powering human-facing visual arrival previews and machine-facing physical-AI navigation priors", tag: "Dual Streams" },
     ],
   },
 
   demo: {
-    heading: "One street. One experiment.",
+    heading: "One continuous corridor. Zero cuts.",
     intro:
-      "A drone hands off to a car, footage streams to a laptop, and a route opens on a phone. Thirty-nine frames, one camera, zero cuts. Drag the scrubber below to test the spatial transition between raw observation and reconstructed geometry.",
+      "A drone captures the block, hands off to street optical video, reconstructs the 3D geometry, and outputs a first-person route on a phone. Drag the scrubber below to inspect how raw street observation transforms into structured spatial navigation.",
   },
 
   infrastructure: {
-    heading: "One spatial representation, dual value streams.",
+    heading: "One underlying 3D representation. Dual value streams.",
     intro:
-      "We aren't building three unrelated products. We are building a single underlying spatial representation that powers both human-facing visual navigation and machine-facing physical AI.",
+      "We aren't building disparate point solutions. We are building a single underlying 3D spatial model that simultaneously powers visual navigation for humans and spatial ground-truth for autonomous machines.",
     paths: [
       {
-        title: "Human World — Consumer & Commercial UX",
-        name: "OnMyWay & Location Approach Previews",
+        title: "Human World — Visual Arrival Previews",
+        name: "OnMyWay Navigation",
         tagline: "See the journey before you take it.",
-        desc: "Visual route previews for complex campuses, hospitals, shopping malls, and unfamiliar urban sectors.",
+        desc: "Visual route previews for complex campuses, hospitals, shopping malls, transit hubs, and dense unnumbered urban sectors.",
         items: [
-          "Continuous 3D route previews",
-          "Landmark recognition cues",
-          "Final-meter destination context",
+          "Continuous first-person corridor walkthroughs",
+          "Visual landmark identification cues",
+          "Final-meter destination & entrance context",
           "Embeddable storefront approach widgets",
         ],
       },
       {
         title: "Machine World — Physical AI Infrastructure",
         name: "Data Wing Platform",
-        tagline: "Data for machines that live in the physical world.",
-        desc: "Structured real-world 3D environments for robotics simulation, embodied AI training, and environment evaluation.",
+        tagline: "Ground truth for machines that operate in the physical world.",
+        desc: "Structured real-world 3D environments for sidewalk delivery rovers, robotics simulation, and autonomous path planning.",
         items: [
-          "Metric multi-layer spatial geometry",
-          "6-DOF camera & pedestrian trajectories",
-          "Semantic surface & object instances",
-          "Temporal change vectors across scans",
+          "Centimeter-accurate curb elevations & ramp profiles",
+          "Pedestrian corridor meshes separated from traffic",
+          "3D semantic obstacle bounding (bollards, benches, poles)",
+          "Real-world metric coordinate frames for simulators",
         ],
       },
     ],
   },
 
   dataWing: {
-    heading: "Data Wing: Pipeline for physical-AI datasets.",
+    heading: "Physical-AI Infrastructure: Multi-layer spatial ground truth.",
     intro:
-      "Today, this is a research hypothesis we are actively building toward. Robotics and physical-AI systems (such as NVIDIA Omniverse and Cosmos world models) increasingly require grounded real-world 3D data for perception and simulation.",
+      "Autonomous sidewalk delivery rovers and physical-AI models cannot navigate on 2D road lines alone. They require multi-layer 3D spatial priors: curb traversability, entryway portals, and physical obstacle bounding.",
     layers: [
-      { name: "01 · Road", contains: "Drivable bounds, curbs, friction profiles" },
-      { name: "02 · Buildings", contains: "Volumetric envelopes, storefronts, portals" },
-      { name: "03 · Objects", contains: "Lamps, signage, utility poles, street clutter" },
-      { name: "04 · Trajectories", contains: "6-DOF camera splines & movement flows" },
-      { name: "05 · Geometry", contains: "Dense metric point clouds & surface normals" },
-      { name: "06 · Appearance", contains: "Photometric radiance profiles & materials" },
-      { name: "07 · Time", contains: "Scan timestamps & temporal change vectors" },
+      { name: "01 · Ground & Corridors", contains: "Walkway meshes, curb elevation profiles, sidewalk friction" },
+      { name: "02 · Building Envelopes", contains: "Volumetric facade planes, entryway portals, canopy projections" },
+      { name: "03 · Physical Obstacles", contains: "Bollards, light poles, hydrants, street furniture bounds" },
+      { name: "04 · Camera Trajectories", contains: "Continuous 6-DOF pose splines with real-world metric anchors" },
+      { name: "05 · Dense Geometry", contains: "Metric point clouds, surface normals, and spatial meshes" },
+      { name: "06 · Appearance & Radiance", contains: "View-dependent photometric radiance and surface materials" },
+      { name: "07 · Temporal Dynamics", contains: "Corridor scan timestamps and seasonal change vectors" },
     ],
     footnote:
-      "Layer descriptions represent our proposed spatial schema under active development. No public commercial dataset is live today.",
+      "Multi-stratum spatial schema under active trial and validation across the Chandigarh pilot corridor.",
   },
 
   proving: {
-    heading: "What we are currently proving.",
+    heading: "What we are currently proving on the ground.",
     intro:
-      "We are early. That's intentional. We are executing Stage 0 to test core technical hypotheses before making production or scaling claims.",
+      "We are deliberate and transparent. We are executing our first field trial to validate core technical hypotheses against real street conditions before making scaling claims.",
     hypotheses: [
       {
         id: "01",
-        title: "Can consumer 360° capture produce useful 3D spatial reconstructions?",
-        detail: "Testing visual-inertial SfM and Gaussian Splatting on commodity panoramic rigs.",
+        title: "Can commodity 360° video produce reliable 3D spatial geometry?",
+        detail: "Evaluating visual-inertial SfM and Gaussian Splatting using sub-$500 panoramic rigs rather than multi-laser LiDAR systems.",
       },
       {
         id: "02",
-        title: "Can we maintain usable spatial accuracy across a continuous road corridor?",
-        detail: "Evaluating odometry drift correction and scale recovery across 500 m+ urban corridors.",
+        title: "Can we maintain metric scale without odometry drift across 500m+?",
+        detail: "Benchmarking scale recovery and visual drift correction along a 500m commercial pedestrian corridor in Chandigarh.",
       },
       {
         id: "03",
-        title: "Can we structure the reconstruction into reusable multi-layer spatial data?",
-        detail: "Developing semantic segmenters for curbs, storefronts, roads, and obstacles.",
+        title: "Can automated vision segment storefront portals and curbs accurately?",
+        detail: "Testing semantic segmentation to extract walkable paths and entryway portals from dense optical footage.",
       },
       {
         id: "04",
-        title: "Can the pipeline reach a viable processing cost per road-kilometer?",
-        detail: "Measuring compute hours and sensor overhead compared to dedicated LiDAR survey fleets.",
+        title: "Can the processing pipeline reach a viable cost per road-kilometer?",
+        detail: "Benchmarking compute hours and sensor overhead to confirm a 10x cost reduction compared to dedicated LiDAR survey fleets.",
       },
       {
         id: "05",
-        title: "Can the resulting representation support applications beyond visualization?",
-        detail: "Assessing dataset utility with physical-AI, simulation, and robotics research teams.",
+        title: "Can the resulting 3D models power both humans and delivery robotics?",
+        detail: "Testing arrival preview utility with local pedestrians alongside spatial mesh compatibility with robotics navigation engines.",
       },
     ],
     experiment: {
-      title: "First Field Trial: One Chandigarh Sector",
-      desc: "Our initial benchmark evaluates the pipeline end-to-end across a single urban sector in Chandigarh, India. We measure metric fidelity, processing overhead, and cost per kilometer.",
+      title: "First Field Benchmark: Sector 17, Chandigarh",
+      desc: "Our active benchmark evaluates the pipeline end-to-end across the iconic pedestrian plazas of Sector 17, Chandigarh, India. We measure metric fidelity, processing overhead, and cost per kilometer.",
     },
   },
 
   capital: {
     heading: "Milestone-driven prototype capital ask.",
     intro:
-      "We are raising our first prototype capital to build, validate, and benchmark the end-to-end spatial reconstruction pipeline across our initial Chandigarh road corridor.",
-    milestoneBought: "A validated end-to-end pipeline capable of turning real-world 360° capture into a structured 3D spatial environment.",
+      "We are raising our first prototype capital to validate and benchmark the end-to-end optical spatial reconstruction pipeline across our initial 10 urban sectors.",
+    milestoneBought: "A validated end-to-end pipeline capable of turning real-world 360° capture into structured 3D spatial environments across 10 complete urban sectors.",
     allocation: [
-      { area: "360° Capture Rigs & Sensors", pct: "25%", desc: "Panoramic optical rigs, IMUs, GNSS receivers & mounting hardware" },
-      { area: "Field Ops & Ground Support", pct: "20%", desc: "On-the-ground sector scanning, control point surveys & compliance" },
-      { area: "Pipeline Engineering & Compute", pct: "40%", desc: "SfM trajectory solver, radiance reconstruction & semantic classification" },
-      { area: "Data Governance & Compliance", pct: "15%", desc: "Automated PII anonymization, face/plate blurring & spatial redacting" },
+      { area: "360° Optical Rigs & Sensor Mounts", pct: "30%", desc: "Panoramic optical rigs, IMUs, GNSS receivers, vehicle & bicycle mounts" },
+      { area: "Pipeline Engineering & Reconstruction Compute", pct: "40%", desc: "SfM trajectory solver, Gaussian Splatting compute & semantic vectorization" },
+      { area: "Field Operations & Sector Ground Surveys", pct: "20%", desc: "On-the-ground sector scanning, ground control point surveys & verification" },
+      { area: "Privacy Redaction & Data Governance", pct: "10%", desc: "Automated on-device blurring of faces, vehicle plates, and private identifiers" },
     ],
   },
 
   founder: {
-    heading: "Why we are building Earthos Lab.",
+    heading: "Why we are building WorldRing.",
     quote:
-      "The physical world is complex, dynamic, and full of context that flat coordinates destroy. Building the infrastructure to capture and structure physical reality is one of the most important technical journeys of the coming decade.",
+      "Flat maps destroyed visual reality. The real world has landmark cues, storefronts, and elevations. Building affordable tools to capture and structure physical reality is the most important navigation transition since GPS.",
     bio:
       "Independent technical exploration in spatial computing, computer vision, and physical AI systems. Based in Chandigarh, India.",
   },

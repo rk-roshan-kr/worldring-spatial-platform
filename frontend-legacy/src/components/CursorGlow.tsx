@@ -30,11 +30,12 @@ export function CursorGlow() {
 
     const tick = () => {
       if (!mounted.current) return;
-      cur.current.x += (pos.current.x - cur.current.x) * spring;
-      cur.current.y += (pos.current.y - cur.current.y) * spring;
-      if (el) {
-        el.style.left = `${cur.current.x}px`;
-        el.style.top = `${cur.current.y}px`;
+      if (pos.current.x > -500) {
+        cur.current.x += (pos.current.x - cur.current.x) * spring;
+        cur.current.y += (pos.current.y - cur.current.y) * spring;
+        if (el) {
+          el.style.transform = `translate3d(${cur.current.x}px, ${cur.current.y}px, 0) translate(-50%, -50%)`;
+        }
       }
       raf.current = requestAnimationFrame(tick);
     };

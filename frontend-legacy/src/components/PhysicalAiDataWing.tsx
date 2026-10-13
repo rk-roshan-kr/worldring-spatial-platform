@@ -242,11 +242,11 @@ export function PhysicalAiDataWing() {
 
         <div className="flex items-center gap-3 font-mono text-[0.68rem] text-inv-muted">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#e08a67] animate-pulse" />
-            <span className="text-[#E6DFD5]">EPSG:4326 Metrology Anchor</span>
+            <span className="w-2 h-2 rounded-full bg-[#e08a67]" />
+            <span className="text-[#E6DFD5]">Pilot Benchmark Schema</span>
           </span>
           <span className="text-inv-line">|</span>
-          <span>Chandigarh Sector 17 Benchmark</span>
+          <span>Chandigarh Sector 17 Corridor</span>
         </div>
       </div>
 

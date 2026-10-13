@@ -17,9 +17,9 @@ const LAYERS: LayerInfo[] = [
   {
     id: "optical",
     num: "01",
-    title: "Panoramic Optical Ingestion",
-    concept: "Continuous 360° panoramic video capture replaces $300k LiDAR rigs with accessible dual-sensor optical rigs.",
-    artisticTitle: "Spherical Lens Field · Equirectangular Horizon",
+    title: "Panoramic Optical Capture",
+    concept: "Continuous 360° panoramic video capture replaces $300k LiDAR rigs with accessible consumer dual-sensor optical rigs.",
+    artisticTitle: "Dual 200° Fisheye · Panoramic Horizon",
     stats: [
       { label: "Optical Rig", value: "Dual 200° F/2.0" },
       { label: "Hardware Cost", value: "< 2% of LiDAR" },
@@ -28,9 +28,9 @@ const LAYERS: LayerInfo[] = [
   {
     id: "trajectory",
     num: "02",
-    title: "Visual-Inertial Camera Splines",
-    concept: "Structure-from-Motion (SfM) solves 6-DOF camera pose matrices, tracking exact vehicle and pedestrian trajectory.",
-    artisticTitle: "Bundle Adjustment · 6-DOF Pose Matrices",
+    title: "Trajectory & Continuous Splines",
+    concept: "Visual-inertial Structure-from-Motion (SfM) solves 6-DOF camera pose matrices, tracking exact corridor movement with loop closure.",
+    artisticTitle: "Visual-Inertial Odometry · 6-DOF Pose",
     stats: [
       { label: "Pose Loop Closure", value: "Sub-centimeter" },
       { label: "Keyframe Linkages", value: "60 fps visual spline" },
@@ -39,23 +39,23 @@ const LAYERS: LayerInfo[] = [
   {
     id: "radiance",
     num: "03",
-    title: "Volumetric Radiance & Splatting",
-    concept: "Neural radiance fields and 3D Gaussian Splats reconstruct photorealistic, continuous view-dependent depth.",
-    artisticTitle: "Gaussian Point Cloud · Continuous Surface Synthesis",
+    title: "Continuous 3D Radiance & Depth",
+    concept: "Neural radiance fields and 3D Gaussian Splats reconstruct metric, view-dependent depth directly from multi-view optical frames.",
+    artisticTitle: "Metric Point Cloud · Continuous Surface Synthesis",
     stats: [
-      { label: "Depth Density", value: "2.4M Splats / Block" },
+      { label: "Depth Density", value: "Dense point cloud" },
       { label: "Visual Fidelity", value: "View-dependent photo ground" },
     ],
   },
   {
     id: "topology",
     num: "04",
-    title: "Structured Spatial Ground Truth",
-    concept: "Continuous radiance is vectorized into navigable walkways, building envelopes, and street approach landmarks.",
-    artisticTitle: "Axonometric Vector Matrix · Navigable Graph",
+    title: "Structured Navigable Ground Truth",
+    concept: "Continuous 3D depth is vectorized into walkable pedestrian paths, building envelopes, and street approach landmarks.",
+    artisticTitle: "Navigable Corridor Graph · Structured Facades",
     stats: [
-      { label: "Navigational Layers", value: "7-Layer Vector Schema" },
-      { label: "Spatial Consumer", value: "Human & Physical-AI" },
+      { label: "Navigational Layers", value: "Walkways, Facades, Curbs" },
+      { label: "Spatial Consumer", value: "Humans & Physical-AI" },
     ],
   },
 ];
@@ -397,8 +397,22 @@ export function SpatialThesisCanvas({
 
       ctx.restore();
 
-      animFrameId.current = requestAnimationFrame(render);
+      if (isVisible) {
+        animFrameId.current = requestAnimationFrame(render);
+      }
     };
+
+    let isVisible = true;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+      if (isVisible) {
+        if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
+        animFrameId.current = requestAnimationFrame(render);
+      } else {
+        if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
+      }
+    }, { threshold: 0.05 });
+    observer.observe(canvas);
 
     render();
 
@@ -411,6 +425,7 @@ export function SpatialThesisCanvas({
     canvas.addEventListener("mousemove", handleMouseMove);
 
     return () => {
+      observer.disconnect();
       window.removeEventListener("resize", onResize);
       if (canvas) canvas.removeEventListener("mousemove", handleMouseMove);
       if (animFrameId.current) cancelAnimationFrame(animFrameId.current);

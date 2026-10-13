@@ -77,9 +77,10 @@ export function ThreadRing({ className = "", onHoverCoordinates }: ThreadRingPro
     const ctx = cv.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    // Cap DPR to 1.5 to prevent GPU pixel fill bottleneck on 4K/Retina displays
-    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    // Cap DPR to 1.25 to prevent GPU fill-rate throttling on integrated GPUs and 4K screens
+    const dpr = Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.25);
     let W = 0, H = 0, cx = 0, cy = 0, R = 0;
+    let hasBuilt = false;
     let threads: Thread[] = [];
     let ripples: ClickRipple[] = [];
     let t0 = 0;
@@ -422,6 +423,7 @@ export function ThreadRing({ className = "", onHoverCoordinates }: ThreadRingPro
       R = Math.min(W, H) * RING_FRAC;
 
       build();
+      hasBuilt = true;
     };
 
     const updateHooks = (now: number) => {
@@ -676,18 +678,34 @@ export function ThreadRing({ className = "", onHoverCoordinates }: ThreadRingPro
     const observer = new IntersectionObserver(
       ([entry]) => {
         const inView = entry.isIntersecting;
-        if (inView && !isVisibleInViewport) {
+        if (inView) {
           isVisibleInViewport = true;
+          if (!hasBuilt || W <= 0 || H <= 0) {
+            resize();
+          }
           cancelAnimationFrame(rafId);
           rafId = requestAnimationFrame(frame);
-        } else if (!inView && isVisibleInViewport) {
+        } else if (hasBuilt) {
           isVisibleInViewport = false;
           cancelAnimationFrame(rafId);
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0.02 }
     );
     observer.observe(cv);
+
+    // ResizeObserver: Guarantees canvas initializes even if layout computation is delayed on low-end hardware
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          resize();
+        }
+      }
+    }) : null;
+    if (ro) {
+      if (cv.parentElement) ro.observe(cv.parentElement);
+      ro.observe(cv);
+    }
 
     const updateMousePos = (e: PointerEvent) => {
       const r = cv.getBoundingClientRect();
@@ -754,6 +772,7 @@ export function ThreadRing({ className = "", onHoverCoordinates }: ThreadRingPro
       live = false;
       cancelAnimationFrame(rafId);
       observer.disconnect();
+      if (ro) ro.disconnect();
       cv.removeEventListener("pointerdown", onPointerDown);
       cv.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
