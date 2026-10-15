@@ -8,7 +8,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 
 // ── VAST CURVED METROPOLITAN SPATIAL ENVIRONMENT ──
 export const LOOP_LENGTH = 800.0;     // 800m continuous winding corridor with macro satellite reveal
-export const ROAD_HALF_WIDTH = 4.8;   // 9.6m wide 2-lane intimate urban street
+export const ROAD_HALF_WIDTH = 3.6;   // Uniform 7.2m wide avenue matching circuit width exactly
 export const CAM_HEIGHT = 1.65;       // Driver / rover eye-level viewpoint
 
 export type ColorMode = "auto" | "lidar" | "heatmap" | "semantic";
@@ -48,8 +48,18 @@ export function getRoadCenter(z: number): { x: number; dx: number; nx: number; n
   const k2 = (4 * Math.PI) / LOOP_LENGTH;
 
   // Sweeping curves reaching negative world X (Screen right) so text has clean space on the left
-  const x = -24.0 * Math.sin(k1 * z) - 7.5 * Math.sin(k2 * z);
-  const dx = -24.0 * k1 * Math.cos(k1 * z) - 7.5 * k2 * Math.cos(k2 * z);
+  const rawX = -24.0 * Math.sin(k1 * z) - 7.5 * Math.sin(k2 * z);
+  const rawDx = -24.0 * k1 * Math.cos(k1 * z) - 7.5 * k2 * Math.cos(k2 * z);
+
+  // Smoothly straighten out between z = 450m and 550m so road aligns dead-center at x = 0
+  let x = rawX;
+  let dx = rawDx;
+  if (z >= 450.0) {
+    const t = Math.min(1.0, (z - 450.0) / 100.0);
+    const ease = t * t * (3.0 - 2.0 * t);
+    x = rawX * (1.0 - ease);
+    dx = rawDx * (1.0 - ease);
+  }
 
   const len = Math.sqrt(1.0 + dx * dx);
   const nx = -1.0 / len;
@@ -67,192 +77,22 @@ export function getCurvePoint(latOffset: number, z: number) {
   };
 }
 
-// ── CONTINUOUS "earthoslab" HIGHWAY CIRCUIT SPLINE GENERATOR ──
-export interface CircuitPoint {
-  x: number;
-  z: number;
-}
-
-export interface CircuitPose {
-  x: number;
-  z: number;
-  dirX: number;
-  dirZ: number;
-  normX: number;
-  normZ: number;
-}
-
-export function createEarthosCircuitPolyline(): CircuitPoint[] {
-  const pts: CircuitPoint[] = [];
-
-  const addCubicBezier = (
-    p0: [number, number],
-    p1: [number, number],
-    p2: [number, number],
-    p3: [number, number],
-    steps: number = 14
-  ) => {
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const it = 1 - t;
-      const x = it * it * it * p0[0] + 3 * it * it * t * p1[0] + 3 * it * t * t * p2[0] + t * t * t * p3[0];
-      const z = it * it * it * p0[1] + 3 * it * it * t * p1[1] + 3 * it * t * t * p2[1] + t * t * t * p3[1];
-      pts.push({ x, z });
-    }
-  };
-
-  const addLine = (p0: [number, number], p1: [number, number], steps: number = 8) => {
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      pts.push({
-        x: p0[0] + (p1[0] - p0[0]) * t,
-        z: p0[1] + (p1[1] - p0[1]) * t,
-      });
-    }
-  };
-
-  const entryX = getRoadCenter(710.0).x;
-
-  // 1. Top Avenue Connection from main road (entryX, 710.0) into 'e'
-  // Tangent at 710m is dx = -0.16. Smooth C1 curve:
-  addCubicBezier([entryX, 710.0], [entryX - 3.2, 725.0], [-35.0, 742.0], [-75.0, 755.0], 22);
-  addCubicBezier([-75.0, 755.0], [-105.0, 765.0], [-125.0, 775.0], [-120.0, 792.0], 20);
-  addCubicBezier([-120.0, 792.0], [-116.0, 800.0], [-108.0, 795.0], [-104.0, 785.0], 16);
-
-  // 2. 'e' - Smooth cursive loop (X: -104 to -82)
-  addCubicBezier([-104.0, 785.0], [-101.0, 778.0], [-95.0, 774.0], [-88.0, 774.0], 16); // crossbar
-  addCubicBezier([-88.0, 774.0], [-83.0, 774.0], [-84.0, 765.0], [-92.0, 765.0], 18);   // top dome
-  addCubicBezier([-92.0, 765.0], [-101.0, 765.0], [-103.0, 773.0], [-101.0, 781.0], 16); // left cheek
-  addCubicBezier([-101.0, 781.0], [-99.0, 787.0], [-91.0, 788.0], [-84.0, 785.0], 16);  // bottom bowl
-  addCubicBezier([-84.0, 785.0], [-80.0, 783.0], [-78.0, 779.0], [-76.0, 774.0], 12);   // valley into 'a'
-
-  // 3. 'a' - Distinct round bowl on left, straight vertical stem on right with baseline hook (X: -76 to -54)
-  addCubicBezier([-76.0, 774.0], [-74.0, 769.0], [-70.0, 767.0], [-63.0, 767.0], 14); // top of stem
-  addCubicBezier([-63.0, 767.0], [-72.0, 767.0], [-76.0, 773.0], [-76.0, 780.0], 16); // left bowl
-  addCubicBezier([-76.0, 780.0], [-76.0, 786.0], [-69.0, 787.0], [-63.0, 785.0], 16); // bottom bowl
-  addLine([-63.0, 785.0], [-63.0, 767.0], 12);                                         // straight up right stem
-  addLine([-63.0, 767.0], [-63.0, 782.0], 10);                                         // straight down right stem
-  addCubicBezier([-63.0, 782.0], [-63.0, 787.0], [-58.0, 787.0], [-54.0, 783.0], 14); // valley into 'r'
-
-  // 4. 'r' - Left vertical stem, arched shoulder, sweeping U-valley (X: -54 to -34)
-  addCubicBezier([-54.0, 783.0], [-52.0, 778.0], [-52.0, 772.0], [-52.0, 767.0], 12); // stem
-  addCubicBezier([-52.0, 767.0], [-52.0, 764.0], [-48.0, 764.0], [-44.0, 767.0], 14); // shoulder
-  addCubicBezier([-44.0, 767.0], [-41.0, 770.0], [-41.0, 775.0], [-40.0, 780.0], 12); // right shoulder
-  addCubicBezier([-40.0, 780.0], [-39.0, 786.0], [-35.0, 787.0], [-31.0, 783.0], 14); // U-valley into 't'
-
-  // 5. 't' - Tall ascender loop with round top dome and crossbar bridge (X: -31 to -11)
-  addCubicBezier([-31.0, 783.0], [-29.0, 777.0], [-29.0, 768.0], [-29.0, 760.0], 14);
-  addCubicBezier([-29.0, 760.0], [-29.0, 754.0], [-23.0, 754.0], [-23.0, 760.0], 16); // round dome
-  addLine([-23.0, 760.0], [-23.0, 772.0], 8);
-  addCubicBezier([-23.0, 772.0], [-31.0, 772.0], [-33.0, 772.0], [-35.0, 772.0], 10); // crossbar left
-  addLine([-35.0, 772.0], [-17.0, 772.0], 14);                                         // crossbar right
-  addCubicBezier([-17.0, 772.0], [-21.0, 772.0], [-23.0, 772.0], [-23.0, 773.0], 6);
-  addLine([-23.0, 773.0], [-23.0, 781.0], 8);
-  addCubicBezier([-23.0, 781.0], [-23.0, 786.0], [-19.0, 787.0], [-15.0, 783.0], 14); // valley into 'h'
-
-  // 6. 'h' - Tall ascender loop with round top dome and arched shoulder (X: -15 to 7)
-  addCubicBezier([-15.0, 783.0], [-13.0, 777.0], [-13.0, 768.0], [-13.0, 760.0], 14);
-  addCubicBezier([-13.0, 760.0], [-13.0, 754.0], [-7.0, 754.0], [-7.0, 760.0], 16);   // round dome
-  addLine([-7.0, 760.0], [-7.0, 772.0], 8);
-  addCubicBezier([-7.0, 772.0], [-5.0, 766.0], [1.0, 766.0], [4.0, 771.0], 16);        // arched shoulder
-  addLine([4.0, 771.0], [4.0, 781.0], 8);
-  addCubicBezier([4.0, 781.0], [4.0, 786.0], [8.0, 787.0], [12.0, 783.0], 14);         // valley into 'o'
-
-  // 7. 'o' - Pure circular roundabout (round on both sides, NO vertical stem!) (X: 12 to 34)
-  addCubicBezier([12.0, 783.0], [14.0, 776.0], [14.0, 770.0], [20.0, 767.0], 16);
-  addCubicBezier([20.0, 767.0], [29.0, 767.0], [31.0, 774.0], [31.0, 781.0], 16);
-  addCubicBezier([31.0, 781.0], [31.0, 787.0], [23.0, 788.0], [17.0, 784.0], 16);
-  addCubicBezier([17.0, 784.0], [11.0, 780.0], [12.0, 771.0], [20.0, 767.0], 16);     // complete circle
-  addCubicBezier([20.0, 767.0], [29.0, 767.0], [33.0, 774.0], [35.0, 783.0], 16);     // exit curve into 's'
-
-  // 8. 's' - Smooth cursive S-curve chicane (X: 35 to 55)
-  addCubicBezier([35.0, 783.0], [37.0, 787.0], [41.0, 787.0], [43.0, 781.0], 12);
-  addCubicBezier([43.0, 781.0], [45.0, 774.0], [46.0, 768.0], [51.0, 767.0], 16);     // top arch
-  addCubicBezier([51.0, 767.0], [55.0, 767.0], [55.0, 773.0], [50.0, 776.0], 16);     // waist
-  addCubicBezier([50.0, 776.0], [44.0, 779.0], [44.0, 786.0], [50.0, 787.0], 16);     // bottom belly
-  addCubicBezier([50.0, 787.0], [56.0, 788.0], [59.0, 786.0], [62.0, 780.0], 14);     // valley into 'l'
-
-  // 9. 'l' - Tall, smooth hairpin ascender loop (X: 62 to 78)
-  addCubicBezier([62.0, 780.0], [64.0, 774.0], [64.0, 765.0], [64.0, 760.0], 14);
-  addCubicBezier([64.0, 760.0], [64.0, 754.0], [70.0, 754.0], [70.0, 760.0], 16);     // round dome
-  addLine([70.0, 760.0], [70.0, 781.0], 12);
-  addCubicBezier([70.0, 781.0], [70.0, 786.0], [74.0, 787.0], [78.0, 783.0], 14);     // valley into second 'a'
-
-  // 10. second 'a' - Identical distinct 'a' (X: 78 to 99)
-  addCubicBezier([78.0, 783.0], [80.0, 774.0], [84.0, 767.0], [91.0, 767.0], 14);
-  addCubicBezier([91.0, 767.0], [82.0, 767.0], [78.0, 773.0], [78.0, 780.0], 16);
-  addCubicBezier([78.0, 780.0], [78.0, 786.0], [85.0, 787.0], [91.0, 785.0], 16);
-  addLine([91.0, 785.0], [91.0, 767.0], 12);                                          // straight up right stem
-  addLine([91.0, 767.0], [91.0, 782.0], 10);                                          // straight down right stem
-  addCubicBezier([91.0, 782.0], [91.0, 787.0], [95.0, 787.0], [99.0, 783.0], 14);     // valley into 'b'
-
-  // 11. 'b' - Tall ascender loop and round circular bowl (X: 99 to 123)
-  addCubicBezier([99.0, 783.0], [101.0, 774.0], [101.0, 765.0], [101.0, 760.0], 14);
-  addCubicBezier([101.0, 760.0], [101.0, 754.0], [107.0, 754.0], [107.0, 760.0], 16);  // round dome
-  addLine([107.0, 760.0], [107.0, 773.0], 8);
-  addCubicBezier([107.0, 773.0], [111.0, 767.0], [118.0, 767.0], [122.0, 773.0], 16);  // top of bowl
-  addCubicBezier([122.0, 773.0], [126.0, 779.0], [124.0, 786.0], [118.0, 787.0], 16);  // bottom of bowl
-  addCubicBezier([118.0, 787.0], [112.0, 788.0], [107.0, 785.0], [107.0, 781.0], 12);  // closes bowl
-
-  // 12. Bottom bypass return expressway:
-  // Sweeps smoothly out of 'b' around the right flank to Z = 806m
-  addCubicBezier([107.0, 781.0], [115.0, 778.0], [126.0, 776.0], [132.0, 783.0], 16);
-  addCubicBezier([132.0, 783.0], [138.0, 790.0], [134.0, 802.0], [122.0, 806.0], 18);
-
-  // Balanced straight bottom expressway along Z = 806.0m:
-  // Runs from X = +122.0 across to X = -105.0m (length = 227m, matching the word span)
-  addLine([122.0, 806.0], [-105.0, 806.0], 32);
-
-  // Smooth left banking curve merging seamlessly into incoming interchange at (-75, 755):
-  addCubicBezier([-105.0, 806.0], [-120.0, 806.0], [-128.0, 796.0], [-128.0, 782.0], 18);
-  addCubicBezier([-128.0, 782.0], [-128.0, 768.0], [-108.0, 755.0], [-75.0, 755.0], 18);
-
-  return pts;
-}
-
-export const EARTHOS_CIRCUIT_SPLINE = createEarthosCircuitPolyline();
-
-// Pre-calculate cumulative lengths along circuit
-const CIRCUIT_CUMULATIVE_DIST: number[] = [0];
-for (let i = 0; i < EARTHOS_CIRCUIT_SPLINE.length - 1; i++) {
-  const p0 = EARTHOS_CIRCUIT_SPLINE[i];
-  const p1 = EARTHOS_CIRCUIT_SPLINE[i + 1];
-  const d = Math.hypot(p1.x - p0.x, p1.z - p0.z);
-  CIRCUIT_CUMULATIVE_DIST.push(CIRCUIT_CUMULATIVE_DIST[i] + d);
-}
-export const CIRCUIT_TOTAL_LENGTH = CIRCUIT_CUMULATIVE_DIST[CIRCUIT_CUMULATIVE_DIST.length - 1];
-
-export function getCircuitPose(progress: number): CircuitPose {
-  const clampedProgress = Math.max(0.0, Math.min(1.0, progress));
-  const targetDist = clampedProgress * CIRCUIT_TOTAL_LENGTH;
-
-  let segIdx = 0;
-  for (let i = 0; i < CIRCUIT_CUMULATIVE_DIST.length - 1; i++) {
-    if (targetDist >= CIRCUIT_CUMULATIVE_DIST[i] && targetDist <= CIRCUIT_CUMULATIVE_DIST[i + 1]) {
-      segIdx = i;
-      break;
-    }
-  }
-
-  const p0 = EARTHOS_CIRCUIT_SPLINE[segIdx];
-  const p1 = EARTHOS_CIRCUIT_SPLINE[segIdx + 1] || p0;
-  const segStart = CIRCUIT_CUMULATIVE_DIST[segIdx];
-  const segEnd = CIRCUIT_CUMULATIVE_DIST[segIdx + 1] || (segStart + 0.001);
-  const segLen = segEnd - segStart;
-  const t = segLen > 0 ? (targetDist - segStart) / segLen : 0;
-
-  const x = p0.x + (p1.x - p0.x) * t;
-  const z = p0.z + (p1.z - p0.z) * t;
-  const dx = p1.x - p0.x;
-  const dz = p1.z - p0.z;
-  const len = Math.hypot(dx, dz);
-  const dirX = len > 0.001 ? dx / len : 0;
-  const dirZ = len > 0.001 ? dz / len : 1;
-  const normX = -dirZ;
-  const normZ = dirX;
-
-  return { x, z, dirX, dirZ, normX, normZ };
-}
+// ── CONTINUOUS "earthoslab" HIGHWAY CIRCUIT SPLINE & POINT CLOUD (MODULAR IMPORT) ──
+export {
+  type CircuitPoint,
+  type CircuitPose,
+  createEarthosCircuitPolyline,
+  EARTHOS_CIRCUIT_SPLINE,
+  CIRCUIT_TOTAL_LENGTH,
+  getCircuitPose,
+  getConnectingRoadPoint,
+} from "./earthosCircuit";
+import {
+  EARTHOS_CIRCUIT_SPLINE,
+  getCircuitPose,
+  getConnectingRoadPoint,
+  getEarthosCircuitPoints,
+} from "./earthosCircuit";
 
 // ── BUILD PROCEDURAL COMPLETE CITY WITH MULTI-BLOCK URBAN GRID (~115,000 VOXELS) ──
 function buildDiverseCurvedMetropolis() {
@@ -280,11 +120,11 @@ function buildDiverseCurvedMetropolis() {
 
   const rnd = () => Math.random();
 
-  // ── 1. MAIN CURVED ARTERIAL AVENUE (Z = 0 to 710m approach) ──
-  for (let z = 0; z <= 710.0; z += 0.45) {
-    // Smooth transition from standard road width (4.8m) down to circuit highway width (2.4m) approaching 710m junction
-    const curRoadW = z > 670.0 ? 4.8 - (4.8 - 2.4) * ((z - 670.0) / 40.0) : ROAD_HALF_WIDTH;
-    const curGuideW = curRoadW - 0.45;
+  // ── 1. MAIN CURVED ARTERIAL AVENUE (Terminates cleanly at 550m before open proving grounds) ──
+  // Reconstructed to 100% match the dense LiDAR holographic raster of earthoslab
+  for (let z = 0; z <= 550.0; z += 0.45) {
+    const curRoadW = ROAD_HALF_WIDTH;
+    const curGuideW = curRoadW - 0.35;
     const curLaneW = curRoadW * 0.50;
 
     const leftCurb = getCurvePoint(curRoadW, z);
@@ -293,48 +133,105 @@ function buildDiverseCurvedMetropolis() {
     const rightGuide = getCurvePoint(-curGuideW, z);
     const leftLane = getCurvePoint(curLaneW, z);
     const rightLane = getCurvePoint(-curLaneW, z);
-    const centerPt1 = getCurvePoint(0.12, z);
-    const centerPt2 = getCurvePoint(-0.12, z);
+    const centerPt = getCurvePoint(0.0, z);
 
-    // Clean Minimal Electric Neon laser curbs
-    addPt(leftCurb.x, 0.02, leftCurb.z, PALETTE.cyanBright, 1.4, 0.85, 0.0);
-    addPt(rightCurb.x, 0.02, rightCurb.z, PALETTE.cyanBright, 1.4, 0.85, 0.0);
+    // Glowing laser curbs (matching earthoslab outer rails)
+    addPt(leftCurb.x, 0.04, leftCurb.z, PALETTE.cyanBright, 1.4, 0.88, 0.0);
+    addPt(rightCurb.x, 0.04, rightCurb.z, PALETTE.cyanBright, 1.4, 0.88, 0.0);
 
-    // Outer road guide lines
-    addPt(leftGuide.x, 0.02, leftGuide.z, PALETTE.cyan, 1.1, 0.65, 0.0);
-    addPt(rightGuide.x, 0.02, rightGuide.z, PALETTE.cyan, 1.1, 0.65, 0.0);
+    // Inner guide rails
+    addPt(leftGuide.x, 0.04, leftGuide.z, PALETTE.cyan, 1.25, 0.78, 0.0);
+    addPt(rightGuide.x, 0.04, rightGuide.z, PALETTE.cyan, 1.25, 0.78, 0.0);
 
-    // Dashed double centerline (Z-modulo 3m)
-    if (Math.floor(z / 3.0) % 2 === 0) {
-      addPt(centerPt1.x, 0.02, centerPt1.z, PALETTE.cyanBright, 1.2, 0.75, 0.0);
-      addPt(centerPt2.x, 0.02, centerPt2.z, PALETTE.cyan, 1.2, 0.65, 0.0);
-    }
+    // Continuous central guidance track
+    addPt(centerPt.x, 0.04, centerPt.z, PALETTE.cyanBright, 1.25, 0.80, 0.0);
 
-    // Lane division guide lines
-    if (Math.floor(z / 4.2) % 2 === 0) {
-      addPt(leftLane.x, 0.02, leftLane.z, PALETTE.teal, 1.0, 0.55, 0.0);
-      addPt(rightLane.x, 0.02, rightLane.z, PALETTE.teal, 1.0, 0.55, 0.0);
-    }
+    // Mid-lane tracks
+    addPt(leftLane.x, 0.04, leftLane.z, PALETTE.teal, 1.15, 0.68, 0.0);
+    addPt(rightLane.x, 0.04, rightLane.z, PALETTE.teal, 1.15, 0.68, 0.0);
 
-    // Transverse Asphalt Laser Scan Dots (Gentle grid)
-    for (let lat = -curRoadW + 1.0; lat <= curRoadW - 1.0; lat += 1.2) {
+    // Transverse LiDAR asphalt scan grid (matching earthoslab darkBlue asphalt tone)
+    for (let lat = -curRoadW + 0.65; lat <= curRoadW - 0.65; lat += 0.32) {
+      if (Math.abs(lat) < 0.18 || Math.abs(Math.abs(lat) - curLaneW) < 0.18) continue;
       const gPt = getCurvePoint(lat, z);
-      addPt(gPt.x, 0.005, gPt.z, PALETTE.darkBlue, 0.8, 0.25, 0.0);
+      addPt(gPt.x, 0.03, gPt.z, PALETTE.darkBlue, 0.80, 0.25, 0.0);
+    }
+
+    // Regular curb lanterns matching earthoslab light posts (every ~9.2m on both curbs)
+    if (z % 9.2 < 0.45) {
+      for (const side of [-1, 1]) {
+        const lp = getCurvePoint(side * (curRoadW + 0.28), z);
+        addPt(lp.x, 0.06, lp.z, PALETTE.warmWhite, 2.4, 1.0, 2.0);
+        addPt(lp.x + side * 0.15, 0.06, lp.z, PALETTE.amberBright, 1.6, 0.85, 2.0);
+      }
+    }
+  }
+
+  // ── 1.1 SEAMLESS STRAIGHT CENTRAL AVENUE INTO T-INTERSECTION (550m to 688.5m) ──
+  // Dead-center along x = 0: dense holographic road mesh, dual laser curbs, and curb lanterns
+  // Terminates cleanly flush with the channelized T-intersection at z = 688.5m
+  for (let z = 550.0; z <= 688.5; z += 0.45) {
+    const cx = 0.0;
+    const cz = z;
+    const nx = -1.0;
+    const nz = 0.0;
+
+    const curRoadW = ROAD_HALF_WIDTH;
+    const curGuideW = curRoadW - 0.35;
+    const curLaneW = curRoadW * 0.50;
+
+    // Outer laser curbs
+    addPt(cx + nx * curRoadW, 0.04, cz + nz * curRoadW, PALETTE.cyanBright, 1.4, 0.88, 0.0);
+    addPt(cx - nx * curRoadW, 0.04, cz - nz * curRoadW, PALETTE.cyanBright, 1.4, 0.88, 0.0);
+
+    // Inner guide rails
+    addPt(cx + nx * curGuideW, 0.04, cz + nz * curGuideW, PALETTE.cyan, 1.25, 0.78, 0.0);
+    addPt(cx - nx * curGuideW, 0.04, cz - nz * curGuideW, PALETTE.cyan, 1.25, 0.78, 0.0);
+
+    // Central track (guides vehicle straight to the T-intersection hold line)
+    addPt(cx, 0.04, cz, PALETTE.cyanBright, 1.25, 0.80, 0.0);
+
+    // Mid-lane tracks
+    addPt(cx + nx * curLaneW, 0.04, cz + nz * curLaneW, PALETTE.teal, 1.15, 0.68, 0.0);
+    addPt(cx - nx * curLaneW, 0.04, cz - nz * curLaneW, PALETTE.teal, 1.15, 0.68, 0.0);
+
+    // Transverse LiDAR asphalt scan grid (matching earthoslab darkBlue asphalt tone)
+    for (let lat = -curRoadW + 0.65; lat <= curRoadW - 0.65; lat += 0.32) {
+      if (Math.abs(lat) < 0.18 || Math.abs(Math.abs(lat) - curLaneW) < 0.18) continue;
+      addPt(cx + nx * lat, 0.03, cz + nz * lat, PALETTE.darkBlue, 0.80, 0.25, 0.0);
+    }
+
+    // Regular glowing curb lanterns
+    if (z % 18.0 < 0.45 && z < 682.0) {
+      for (const side of [-1, 1]) {
+        const lx = cx + nx * (side * (curRoadW + 0.28));
+        const lz = cz + nz * (side * (curRoadW + 0.28));
+        addPt(lx, 0.06, lz, PALETTE.warmWhite, 2.4, 1.0, 2.0);
+        addPt(lx + nx * (side * 0.15), 0.06, lz + nz * (side * 0.15), PALETTE.amberBright, 1.6, 0.85, 2.0);
+      }
     }
   }
 
   // Asphalt ground LiDAR reflectance dots (textured street)
-  for (let i = 0; i < 9800; i++) {
-    const z = rnd() * 710.0;
+  for (let i = 0; i < 7200; i++) {
+    const z = rnd() * 550.0;
     const latOffset = (rnd() - 0.5) * ROAD_HALF_WIDTH * 1.9;
     const pt = getCurvePoint(latOffset, z);
     addPt(pt.x, 0.0, pt.z, PALETTE.deepGrid, 0.7 + rnd() * 0.6, 0.12 + rnd() * 0.18, 0.0);
   }
 
+  // Connecting avenue ground LiDAR reflectance scatter
+  for (let i = 0; i < 2400; i++) {
+    const t = rnd();
+    const pt = getConnectingRoadPoint(t);
+    const latOffset = (rnd() - 0.5) * (ROAD_HALF_WIDTH * 1.9);
+    addPt(pt.x + pt.normX * latOffset, 0.01, pt.z + pt.normZ * latOffset, PALETTE.deepGrid, 0.7 + rnd() * 0.6, 0.12 + rnd() * 0.18, 0.0);
+  }
+
   // ── 2. SIDEWALKS & PEDESTRIAN ESPLANADES ALONG MAIN ROAD ──
-  // Smoothly terminates at 695m before the 710m cursive highway interchange
-  for (let z = 0; z <= 695.0; z += 0.85) {
-    const curRoadW = z > 670.0 ? 4.8 - (4.8 - 2.4) * ((z - 670.0) / 40.0) : ROAD_HALF_WIDTH;
+  // Cleanly terminates at 530m, leaving the proving ground 100% open
+  for (let z = 0; z <= 530.0; z += 0.85) {
+    const curRoadW = ROAD_HALF_WIDTH;
     for (const side of [-1, 1]) {
       const swEdge = getCurvePoint(side * (curRoadW + 0.2), z);
       const swOuter = getCurvePoint(side * (curRoadW + 2.8), z);
@@ -346,9 +243,9 @@ function buildDiverseCurvedMetropolis() {
     }
   }
 
-  // Streetlamps marching along curved sidewalks (Terminates at 680m before junction)
-  for (let lz = 12; lz <= 680.0; lz += 22) {
-    const curRoadWLamp = lz > 670.0 ? 4.8 - (4.8 - 2.4) * ((lz - 670.0) / 40.0) : ROAD_HALF_WIDTH;
+  // Streetlamps marching along curved sidewalks (Terminates at 510m before proving grounds)
+  for (let lz = 12; lz <= 510.0; lz += 22) {
+    const curRoadWLamp = ROAD_HALF_WIDTH;
     for (const side of [-1, 1]) {
       const basePt = getCurvePoint(side * (curRoadWLamp + 0.4), lz);
       const armPt = getCurvePoint(side * (curRoadWLamp - 1.2), lz);
@@ -365,8 +262,8 @@ function buildDiverseCurvedMetropolis() {
   }
 
   // ── 3. INTERSECTING CROSS-STREETS (URBAN STREET GRID) ──
-  // Perpendicular cross-avenues intersecting along approach corridor
-  const crossStreetZs = [65, 135, 205, 275, 345, 415, 485, 555, 625, 695];
+  // Perpendicular cross-avenues (Terminates cleanly at 485m, leaving proving ground 100% open)
+  const crossStreetZs = [65, 135, 205, 275, 345, 415, 485];
   for (const cZ of crossStreetZs) {
     // Crossroad surface & curbs extending laterally with clean, elegant dot density
     for (let lat = -85.0; lat <= 85.0; lat += 2.4) {
@@ -457,7 +354,9 @@ function buildDiverseCurvedMetropolis() {
 
   // ── 5. INNER PEDESTRIAN COURTYARDS & FOUNTAIN PLAZAS (The exact final 100m problem!) ──
   // Located behind the streetfront at z = 100m, 240m, 380m, 520m, 660m
-  const courtyardZs = [100.0, 240.0, 380.0, 520.0, 660.0];
+  // ── 5. INNER PEDESTRIAN COURTYARDS & FOUNTAIN PLAZAS ──
+  // Located behind the streetfront (Terminates cleanly at 520m, leaving stage 4 completely open)
+  const courtyardZs = [100.0, 240.0, 380.0, 520.0];
   for (const ctz of courtyardZs) {
     for (const side of [-1, 1]) {
       const courtCenter = getCurvePoint(side * (ROAD_HALF_WIDTH + 14.0), ctz);
@@ -503,8 +402,9 @@ function buildDiverseCurvedMetropolis() {
   }
 
   // ── 6. CITY BLOCKS ROW 2: MID-RISE TOWERS & SKYBRIDGES (x = ±[26m to 58m]) ──
+  // Stops cleanly at 460m, opening up the entire satellite reveal
   for (const side of [-1, 1]) {
-    for (let mz = 25; mz < LOOP_LENGTH; mz += 45) {
+    for (let mz = 25; mz <= 460; mz += 45) {
       const bW = 28.0;
       const bH = 26.0 + ((mz * 7) % 24.0);
       const x0 = side * (ROAD_HALF_WIDTH + 26.0);
@@ -525,8 +425,8 @@ function buildDiverseCurvedMetropolis() {
       }
     }
 
-    // Elevated Glass Skybridges spanning between buildings at y = 14m
-    for (const sbZ of [135, 275, 415, 555, 695]) {
+    // Elevated Glass Skybridges spanning between buildings at y = 14m (Terminates at 415m)
+    for (const sbZ of [135, 275, 415]) {
       const pStart = getCurvePoint(side * (ROAD_HALF_WIDTH + 4.0), sbZ);
       const pEnd = getCurvePoint(side * (ROAD_HALF_WIDTH + 24.0), sbZ);
       for (let s = 0.0; s <= 1.0; s += 0.08) {
@@ -540,6 +440,7 @@ function buildDiverseCurvedMetropolis() {
   }
 
   // ── 7. CITY BLOCKS ROW 3: METROPOLITAN SKYLINE CANYON (x = ±[65m to 140m]) ──
+  // Terminates cleanly before 480m, leaving proving ground 100% open
   for (const side of [-1, 1]) {
     const skylineTowers = [
       { z: 20,  w: 36, h: 90,  dist: 70 },
@@ -549,9 +450,6 @@ function buildDiverseCurvedMetropolis() {
       { z: 310, w: 40, h: 115, dist: 80 },
       { z: 390, w: 44, h: 130, dist: 90 },
       { z: 470, w: 38, h: 110, dist: 78 },
-      { z: 545, w: 42, h: 125, dist: 88 },
-      { z: 610, w: 40, h: 140, dist: 92 },
-      { z: 675, w: 42, h: 135, dist: 86 },
     ];
     for (const t of skylineTowers) {
       const o0 = side * t.dist;
@@ -576,7 +474,7 @@ function buildDiverseCurvedMetropolis() {
   }
 
   // ── 8. PARKED CITY VEHICLES ALONG CURBS ──
-  const parkedCarZs = [24, 46, 92, 118, 162, 234, 318, 362, 442, 514, 586, 658];
+  const parkedCarZs = [24, 46, 92, 118, 162, 234, 318, 362, 442];
   for (const pz of parkedCarZs) {
     for (const side of [-1, 1]) {
       const carLat = side * (ROAD_HALF_WIDTH - 0.7);
@@ -651,68 +549,20 @@ function buildDiverseCurvedMetropolis() {
     addPt(r2.x, 12.7, r2.z, PALETTE.cyanBright, 1.2, 0.80, 3.0);
   }
 
-  // ── 9.5 SATELLITE MACRO OVERLOOK: CONTINUOUS "earthoslab" HIGHWAY CIRCUIT ──
-  // The road network itself forms the single continuous lowercase "earthoslab" circuit
-  // EXACTLY MATCHES THE MAIN ROAD: Same width, same point size, same minimal glow
-  let cumulativeCircuitDist = 0.0;
-  const circuitW = 2.4; // Identical 4.8m road width matching the 710m junction
-
-  for (let i = 0; i < EARTHOS_CIRCUIT_SPLINE.length - 1; i++) {
-    const p0 = EARTHOS_CIRCUIT_SPLINE[i];
-    const p1 = EARTHOS_CIRCUIT_SPLINE[i + 1];
-    const dx = p1.x - p0.x;
-    const dz = p1.z - p0.z;
-    const segLen = Math.hypot(dx, dz);
-    if (segLen < 0.01) continue;
-
-    const dirX = dx / segLen;
-    const dirZ = dz / segLen;
-    const normX = -dirZ;
-    const normZ = dirX;
-
-    const step = 0.42;
-    const numSteps = Math.max(1, Math.floor(segLen / step));
-
-    for (let sIdx = 0; sIdx <= numSteps; sIdx++) {
-      const frac = sIdx / numSteps;
-      const curDist = cumulativeCircuitDist + segLen * frac;
-      const cx = p0.x + dx * frac;
-      const cz = p0.z + dz * frac;
-
-      // ── IDENTICAL CLEAN LASER CURBS (Matches the road exactly, luminous & crisp) ──
-      addPt(cx + normX * circuitW, 0.02, cz + normZ * circuitW, PALETTE.cyanBright, 1.5, 0.90, 0.0);
-      addPt(cx - normX * circuitW, 0.02, cz - normZ * circuitW, PALETTE.cyanBright, 1.5, 0.90, 0.0);
-
-      // Outer road guide lines (Matches the road)
-      addPt(cx + normX * (circuitW - 0.45), 0.02, cz + normZ * (circuitW - 0.45), PALETTE.cyan, 1.2, 0.70, 0.0);
-      addPt(cx - normX * (circuitW - 0.45), 0.02, cz - normZ * (circuitW - 0.45), PALETTE.cyan, 1.2, 0.70, 0.0);
-
-      // Dashed double centerline (Matches the road: modulo 3.0m)
-      if (Math.floor(curDist / 3.0) % 2 === 0) {
-        addPt(cx + normX * 0.12, 0.02, cz + normZ * 0.12, PALETTE.cyanBright, 1.3, 0.82, 0.0);
-        addPt(cx - normX * 0.12, 0.02, cz - normZ * 0.12, PALETTE.cyan, 1.3, 0.72, 0.0);
-      }
-
-      // Lane division guide lines (Matches the road: modulo 4.2m)
-      if (Math.floor(curDist / 4.2) % 2 === 0) {
-        addPt(cx + normX * (circuitW * 0.5), 0.02, cz + normZ * (circuitW * 0.5), PALETTE.teal, 1.1, 0.60, 0.0);
-        addPt(cx - normX * (circuitW * 0.5), 0.02, cz - normZ * (circuitW * 0.5), PALETTE.teal, 1.1, 0.60, 0.0);
-      }
-
-      // Transverse Asphalt Laser Scan Dots (Gentle subtle grid matching the road)
-      for (let lat = -circuitW + 0.8; lat <= circuitW - 0.8; lat += 1.0) {
-        addPt(cx + normX * lat, 0.005, cz + normZ * lat, PALETTE.darkBlue, 0.7, 0.20, 0.0);
-      }
-
-      // Refined architectural streetlamp beacon tips every 28m (Minimal, no explosion)
-      if (curDist % 28.0 < step * 1.05) {
-        for (let py = 0; py < 4.2; py += 0.6) {
-          addPt(cx + normX * (circuitW + 0.6), py, cz + normZ * (circuitW + 0.6), PALETTE.teal, 0.9, 0.50, 2.0);
-        }
-        addPt(cx + normX * (circuitW + 0.6), 4.2, cz + normZ * (circuitW + 0.6), PALETTE.cyanBright, 1.6, 0.85, 2.0);
-      }
-    }
-    cumulativeCircuitDist += segLen;
+  // ── 9.5 NATIVE PRISTINE EARTHOSLAB SATELLITE PROVING GROUND POINT CLOUD ──
+  // 100% native WebGL points reconstructed in code directly from the master satellite circuit. Zero external image textures.
+  const circuitData = getEarthosCircuitPoints();
+  for (let i = 0; i < circuitData.count; i++) {
+    const i3 = i * 3;
+    const px = circuitData.positions[i3];
+    const py = circuitData.positions[i3 + 1];
+    const pz = circuitData.positions[i3 + 2];
+    const cr = circuitData.colors[i3];
+    const cg = circuitData.colors[i3 + 1];
+    const cb = circuitData.colors[i3 + 2];
+    const cSize = circuitData.sizes[i];
+    const cAlpha = circuitData.alphas[i];
+    addPt(px, py, pz, [cr, cg, cb], cSize, cAlpha, 0.0);
   }
 
   // ── 10. ATMOSPHERIC SPATIAL STARS & VOXEL PARTICLES ──
@@ -899,7 +749,7 @@ export function VoidCanvas({
   className?: string;
   colorMode?: ColorMode;
   cameraMode?: CameraMode;
-  onStats?: (stats: { pts: number; fps: number; depthM: number; speedKmh: number }) => void;
+  onStats?: (stats: { pts: number; fps: number; depthM: number; speedKmh: number; macroProgress?: number }) => void;
   onStoppageChange?: (state: any) => void;
   forceOverride?: boolean;
 }) {
@@ -975,6 +825,8 @@ export function VoidCanvas({
     });
     const staticPointCloud = new THREE.Points(staticGeo, shaderMaterial);
     scene.add(staticPointCloud);
+
+    // ── 1.5 PRISTINE POINT CLOUD SCENE SETUP ──
 
 
     // ── 2. DYNAMIC ACTORS POINT CLOUD (Detailed Truck, Pedestrian, Rover, Transit) ──
@@ -1168,10 +1020,10 @@ export function VoidCanvas({
         targetLookY = 2.05;
         targetLookZ = lookPt.z;
       } else if (p <= 0.88) {
-        // Stage 3: Summit Overlook & Approach (540m to 615m)
+        // Stage 3: Summit Overlook & Approach (540m to 550m)
         const u = (p - 0.70) / (0.88 - 0.70);
         const eased = u * u * (3.0 - 2.0 * u);
-        rawTruckZ = 540.0 + (615.0 - 540.0) * eased;
+        rawTruckZ = 540.0 + (550.0 - 540.0) * eased;
         rawTruckLat = 0.0;
 
         const chaseDist = 6.4 + 10.5 * eased;
@@ -1187,33 +1039,35 @@ export function VoidCanvas({
         targetLookZ = lookPt.z;
       } else {
         // Stage 4: SATELLITE MACRO ZOOM-OUT · CONTINUOUS "earthoslab" REVEAL (p = 0.88 to 1.0)
-        // Rover completes avenue travel from 615m to 710m arrival
+        // Rover completes avenue travel from 550m through connecting avenue into circuit entrance (686.3m)
         const s = (p - 0.88) / 0.12;
         const sEased = s * s * (3.0 - 2.0 * s);
 
-        rawTruckZ = 615.0 + (710.0 - 615.0) * sEased;
+        const connPt = getConnectingRoadPoint(Math.min(1.0, sEased * 1.05));
+        rawTruckZ = connPt.z;
         rawTruckLat = 0.0;
 
-        // Camera ascends into majestic satellite orbit (altitude 220m), centering over the glowing earthoslab circuit at (3.0, 0.0, 765.0)
+        // Camera ascends into majestic satellite orbit (altitude 220m), centering dead-center over glowing earthoslab circuit at (0.0, 0.0, 735.0)
         const macroCamHeight = 4.8 + (220.0 - 4.8) * sEased;
-        const baseChaseZ = 615.0 - 16.9;
-        const targetCenterZ = 765.0; // Geographic center Z of the earthoslab continuous circuit
+        const baseChaseZ = 550.0 - 16.9;
+        const targetCenterZ = 735.0; // Geographic center Z of the earthoslab continuous circuit
         const macroCamZ = baseChaseZ + (targetCenterZ - baseChaseZ) * sEased;
         const baseCamX = getCurvePoint(-1.76, baseChaseZ).x;
-        const macroCamX = baseCamX * (1.0 - sEased) + 3.0 * sEased;
+        const macroCamX = baseCamX * (1.0 - sEased) + 0.0 * sEased; // Centered horizontally at X = 0.0
 
         targetCamX = macroCamX;
         targetCamY = macroCamHeight;
         targetCamZ = macroCamZ;
 
-        // Center look target on the glowing earthoslab circuit at (3.0, 0, 765m)
-        targetLookX = 3.0 * sEased;
+        // Center look target dead-center on the glowing earthoslab circuit at (0.0, 0, 735m)
+        targetLookX = 0.0 * sEased;
         targetLookY = 0.0;
-        targetLookZ = (615.0 + 24.0) * (1.0 - sEased) + targetCenterZ * sEased;
+        targetLookZ = (550.0 + 24.0) * (1.0 - sEased) + targetCenterZ * sEased;
 
-        // Smooth camera up vector interpolation to top-down orientation:
+        // Smooth camera up vector interpolation to top-down 180-deg orientation:
+        // Text reads left-to-right, right-side-up, and the city avenue approaches cleanly at bottom-left!
         const curUpY = Math.cos(sEased * Math.PI * 0.5);
-        const curUpZ = -Math.sin(sEased * Math.PI * 0.5);
+        const curUpZ = Math.sin(sEased * Math.PI * 0.5);
         camera.up.set(0, curUpY, curUpZ).normalize();
       }
 
@@ -1256,38 +1110,43 @@ export function VoidCanvas({
       const truckZ = rawTruckZ;
       const truckLat = rawTruckLat;
 
-      // Report stats to parent HUD
-      onStats?.({
-        pts: cityData.count,
-        fps: currentFps,
-        depthM: Math.round(truckZ),
-        speedKmh: speedKmh,
-      });
-
       // Update macro progress uniform for satellite elevation
       const macroVal = p > 0.88 ? Math.min(1.0, (p - 0.88) / 0.12) : 0.0;
       const macroEased = macroVal * macroVal * (3.0 - 2.0 * macroVal);
       uniforms.uMacroProgress.value = macroEased;
       dynUniforms.uMacroProgress.value = macroEased;
 
-      // Compute circuit progress and vehicle pose helper for Stage 4
-      let circuitProgress = 0.0;
-      if (p > 0.88) {
-        const s = (p - 0.88) / 0.12;
-        const sEased = s * s * (3.0 - 2.0 * s);
-        // Navigates smoothly through 'e'->'b' and loops around continuously
-        circuitProgress = (sEased * 0.85 + elapsed * 0.02) % 1.0;
-      }
+      // Report stats to parent HUD
+      onStats?.({
+        pts: cityData.count,
+        fps: currentFps,
+        depthM: Math.round(truckZ),
+        speedKmh: speedKmh,
+        macroProgress: macroEased,
+      });
 
+      // Compute circuit progress and vehicle pose helper for Stage 4
       const getTruckPoint = (localX: number, localZ: number) => {
         if (p <= 0.88) {
           return getCurvePoint(truckLat + localX, truckZ + localZ);
         } else {
-          const pose = getCircuitPose(circuitProgress);
-          return {
-            x: pose.x + pose.normX * localX + pose.dirX * localZ,
-            z: pose.z + pose.normZ * localX + pose.dirZ * localZ,
-          };
+          const s = (p - 0.88) / 0.12;
+          const sEased = s * s * (3.0 - 2.0 * s);
+          if (sEased < 0.88) {
+            const connPt = getConnectingRoadPoint(sEased / 0.88);
+            return {
+              x: connPt.x + connPt.normX * localX + connPt.dirX * localZ,
+              z: connPt.z + connPt.normZ * localX + connPt.dirX * localZ,
+            };
+          } else {
+            // Vehicle smoothly navigates around the entire cursive earthoslab circuit in real-time
+            const trackProgress = ((sEased - 0.88) * 0.45 + elapsed * 0.025) % 1.0;
+            const pose = getCircuitPose(trackProgress);
+            return {
+              x: pose.x + pose.normX * localX + pose.dirX * localZ,
+              z: pose.z + pose.normZ * localX + pose.dirZ * localZ,
+            };
+          }
         }
       };
 

@@ -27,7 +27,7 @@ export default function Home() {
   const [contactMode, setContactMode] = useState("FUND_PROTOTYPE");
   const [colorMode, setColorMode] = useState<ColorMode>("lidar");
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [liveStats, setLiveStats] = useState({ speedKmh: 0, depthM: 5 });
+  const [liveStats, setLiveStats] = useState({ speedKmh: 0, depthM: 5, macroProgress: 0 });
 
   const lenisRef = useRef<Lenis | null>(null);
 
@@ -98,6 +98,7 @@ export default function Home() {
             setLiveStats({
               speedKmh: stats.speedKmh,
               depthM: stats.depthM,
+              macroProgress: stats.macroProgress ?? 0,
             });
           }}
         />
