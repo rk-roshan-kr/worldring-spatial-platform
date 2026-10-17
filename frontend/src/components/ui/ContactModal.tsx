@@ -53,7 +53,7 @@ export function ContactModal({ isOpen, onClose, initialMode = "FUND_PROTOTYPE" }
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-lg p-6 sm:p-8 rounded-2xl void-glass border-accent/30 shadow-[0_24px_48px_rgba(0,0,0,0.9)] z-10"
+            className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto p-5 sm:p-8 rounded-2xl void-glass border-accent/30 shadow-[0_24px_48px_rgba(0,0,0,0.9)] z-10"
           >
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
               <div>

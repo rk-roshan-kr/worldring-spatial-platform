@@ -22,12 +22,14 @@ import {
   FileText,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   Download,
 } from "lucide-react";
 
 export default function ThesisPage() {
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [contactMode, setContactMode] = useState("FUND_PROTOTYPE");
+  const [isMobileTocOpen, setIsMobileTocOpen] = useState(false);
 
   const handleOpenContact = (mode: string = "FUND_PROTOTYPE") => {
     setContactMode(mode);
@@ -48,14 +50,15 @@ export default function ThesisPage() {
   return (
     <div className="min-h-screen bg-black text-[#f2ede4] font-sans selection:bg-cyan-500/20 selection:text-white">
       {/* ── Fixed Header ── */}
-      <header className="sticky top-0 z-50 bg-black/90 backdrop-blur-xl border-b border-white/10 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 bg-black/90 backdrop-blur-xl border-b border-white/10 px-3 sm:px-8 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-[0.80rem] font-mono text-cyan-400 hover:text-cyan-300 transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10"
+            className="inline-flex items-center gap-1.5 sm:gap-2 text-[0.76rem] sm:text-[0.80rem] font-mono text-cyan-400 hover:text-cyan-300 transition-colors bg-white/5 hover:bg-white/10 px-2.5 sm:px-3 py-1.5 rounded-full border border-white/10 shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>3D Spatial Experience</span>
+            <span className="hidden sm:inline">3D Spatial Experience</span>
+            <span className="sm:hidden">3D Experience</span>
           </Link>
           <div className="h-4 w-px bg-white/20 hidden sm:block" />
           <span className="font-serif text-[1.05rem] font-medium tracking-tight text-white hidden sm:inline">
@@ -63,34 +66,35 @@ export default function ThesisPage() {
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => handleOpenContact("FUND_PROTOTYPE")}
-            className="inline-flex items-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-black font-semibold text-[0.78rem] font-mono py-1.5 px-4 rounded-full transition-all cursor-pointer shadow-[0_0_16px_rgba(0,200,232,0.3)]"
+            className="inline-flex items-center gap-1.5 sm:gap-2 bg-cyan-400 hover:bg-cyan-300 text-black font-semibold text-[0.74rem] sm:text-[0.78rem] font-mono py-1.5 px-3 sm:px-4 rounded-full transition-all cursor-pointer shadow-[0_0_16px_rgba(0,200,232,0.3)]"
           >
-            <span>Review Data Room</span>
+            <span className="hidden sm:inline">Review Data Room</span>
+            <span className="sm:hidden">Data Room</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
 
       {/* ── Hero Banner ── */}
-      <section className="border-b border-white/10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
+      <section className="border-b border-white/10 py-12 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
         <div className="space-y-4 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-400/30 text-cyan-300 font-mono text-[0.68rem] uppercase tracking-widest font-semibold">
-            <FileText className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Complete Architecture & Investment Thesis · v0.2</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-400/30 text-cyan-300 font-mono text-[0.68rem] uppercase tracking-widest font-semibold max-w-full">
+            <FileText className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span className="truncate">Complete Architecture & Investment Thesis · v0.2</span>
           </div>
 
-          <h1 className="font-serif text-[clamp(2.2rem,5vw,3.8rem)] leading-[1.08] tracking-[-0.02em] font-medium text-white">
+          <h1 className="font-serif text-[clamp(1.9rem,5vw,3.8rem)] leading-[1.08] tracking-[-0.02em] font-medium text-white">
             Reconstructing the Physical World as Structured Spatial Intelligence.
           </h1>
 
-          <p className="font-serif italic text-cyan-200/80 text-[1.15rem] leading-relaxed">
+          <p className="font-serif italic text-cyan-200/80 text-[1.05rem] sm:text-[1.15rem] leading-relaxed">
             The mathematical foundations, optical reconstruction pipeline, and dual commercial deployment of WorldRing in Chandigarh Sector 17.
           </p>
 
-          <div className="pt-4 flex flex-wrap items-center gap-4 text-muted font-mono text-[0.74rem]">
+          <div className="pt-4 flex flex-wrap items-center gap-3 sm:gap-4 text-muted font-mono text-[0.70rem] sm:text-[0.74rem]">
             <span>LOCATION: Sector 17, Chandigarh (30.7333° N / 76.7794° E)</span>
             <span className="text-white/20">·</span>
             <span>HARDWARE COST: &lt; $500 per rig</span>
@@ -101,11 +105,26 @@ export default function ThesisPage() {
       </section>
 
       {/* ── Main Two-Column Document Layout ── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12 flex flex-col lg:flex-row gap-12">
-        {/* Sticky Table of Contents Sidebar */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-12 flex flex-col lg:flex-row gap-8 lg:gap-12">
+        {/* Table of Contents Sidebar */}
         <aside className="lg:w-64 shrink-0">
-          <div className="sticky top-24 space-y-4">
-            <div className="font-mono text-[0.66rem] uppercase tracking-widest text-muted font-bold">
+          {/* Mobile TOC Toggle (Hidden on Desktop) */}
+          <div className="lg:hidden">
+            <button
+              onClick={() => setIsMobileTocOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-mono text-[0.76rem] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Compass className="w-4 h-4 text-cyan-400" />
+                <span>Table of Contents ({sections.length} Chapters)</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-white/60 transition-transform ${isMobileTocOpen ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+
+          {/* Links list: Collapsible on mobile, Always visible & sticky on PC */}
+          <div className={`${isMobileTocOpen ? "block mt-3" : "hidden"} lg:block sticky top-24 space-y-4`}>
+            <div className="font-mono text-[0.66rem] uppercase tracking-widest text-muted font-bold hidden lg:block">
               DOCUMENT SECTIONS
             </div>
             <nav className="space-y-1">
@@ -113,6 +132,7 @@ export default function ThesisPage() {
                 <a
                   key={s.id}
                   href={`#${s.id}`}
+                  onClick={() => setIsMobileTocOpen(false)}
                   className="block font-mono text-[0.76rem] text-white/60 hover:text-cyan-400 hover:bg-white/5 py-1.5 px-2.5 rounded-lg transition-colors"
                 >
                   {s.label}
@@ -120,20 +140,26 @@ export default function ThesisPage() {
               ))}
             </nav>
 
-            <div className="pt-6 border-t border-white/10 space-y-3">
+            <div className="pt-4 lg:pt-6 border-t border-white/10 space-y-3">
               <div className="font-mono text-[0.66rem] uppercase tracking-widest text-muted font-bold">
                 DOCUMENT ACTIONS
               </div>
               <button
-                onClick={() => handleOpenContact("FUND_PROTOTYPE")}
-                className="w-full text-left font-mono text-[0.74rem] text-cyan-300 hover:text-white bg-white/5 p-2 rounded-lg border border-white/10 flex items-center justify-between"
+                onClick={() => {
+                  setIsMobileTocOpen(false);
+                  handleOpenContact("FUND_PROTOTYPE");
+                }}
+                className="w-full text-left font-mono text-[0.74rem] text-cyan-300 hover:text-white bg-white/5 p-2 rounded-lg border border-white/10 flex items-center justify-between cursor-pointer"
               >
                 <span>Request Cap Table & Pitch</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => handleOpenContact("PARTNER_PILOT")}
-                className="w-full text-left font-mono text-[0.74rem] text-white/80 hover:text-white bg-white/5 p-2 rounded-lg border border-white/10 flex items-center justify-between"
+                onClick={() => {
+                  setIsMobileTocOpen(false);
+                  handleOpenContact("PARTNER_PILOT");
+                }}
+                className="w-full text-left font-mono text-[0.74rem] text-white/80 hover:text-white bg-white/5 p-2 rounded-lg border border-white/10 flex items-center justify-between cursor-pointer"
               >
                 <span>Partner on Sector Pilot</span>
                 <ChevronRight className="w-3.5 h-3.5" />

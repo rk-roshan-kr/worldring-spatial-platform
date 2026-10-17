@@ -32,12 +32,12 @@ export function HeroVoid({
           animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-cyan-950/40 border border-cyan-400/35 backdrop-blur-md shadow-[0_0_20px_rgba(0,200,232,0.25)]">
-            <span className="relative flex h-2 w-2">
+          <div className="inline-flex items-center gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-cyan-950/40 border border-cyan-400/35 backdrop-blur-md shadow-[0_0_20px_rgba(0,200,232,0.25)] max-w-full">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400" />
             </span>
-            <p className="font-mono text-[0.66rem] tracking-[0.20em] text-cyan-200 uppercase font-bold">
+            <p className="font-mono text-[0.60rem] sm:text-[0.66rem] tracking-[0.10em] sm:tracking-[0.20em] text-cyan-200 uppercase font-bold truncate">
               SPATIAL DIGITAL TWIN · SECTOR 17 BENCHMARK
             </p>
           </div>
@@ -48,7 +48,7 @@ export function HeroVoid({
           initial={{ opacity: 0, y: 15 }}
           animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif text-[clamp(2.1rem,4.0vw,3.4rem)] leading-[1.10] tracking-[-0.025em] font-medium text-white max-w-[19ch] text-balance"
+          className="font-serif text-[clamp(1.9rem,6vw,3.4rem)] lg:text-[clamp(2.1rem,4.0vw,3.4rem)] leading-[1.10] tracking-[-0.025em] font-medium text-white max-w-[19ch] text-balance"
         >
           The physical world is becoming the{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-amber-200 drop-shadow-[0_0_24px_rgba(0,200,232,0.4)]">
@@ -105,20 +105,20 @@ export function HeroVoid({
           transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="pt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[0.70rem]"
         >
-          <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
-            <span className="text-cyan-300 font-bold block text-[0.95rem]">&lt; $500</span>
+          <div className="p-2 sm:p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
+            <span className="text-cyan-300 font-bold block text-[0.88rem] sm:text-[0.95rem]">&lt; $500</span>
             <span className="text-muted text-[0.62rem] uppercase">Rig Cost</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
-            <span className="text-cyan-300 font-bold block text-[0.95rem]">&lt; 0.05m</span>
+          <div className="p-2 sm:p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
+            <span className="text-cyan-300 font-bold block text-[0.88rem] sm:text-[0.95rem]">&lt; 0.05m</span>
             <span className="text-muted text-[0.62rem] uppercase">Accuracy</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
-            <span className="text-cyan-300 font-bold block text-[0.95rem]">500m</span>
+          <div className="p-2 sm:p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
+            <span className="text-cyan-300 font-bold block text-[0.88rem] sm:text-[0.95rem]">500m</span>
             <span className="text-muted text-[0.62rem] uppercase">Loop Closure</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
-            <span className="text-cyan-300 font-bold block text-[0.95rem]">3D Splats</span>
+          <div className="p-2 sm:p-2.5 rounded-lg bg-black/60 border border-white/10 text-center">
+            <span className="text-cyan-300 font-bold block text-[0.88rem] sm:text-[0.95rem]">3D Splats</span>
             <span className="text-muted text-[0.62rem] uppercase">Neural Prior</span>
           </div>
         </motion.div>

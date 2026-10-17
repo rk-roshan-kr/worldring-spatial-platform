@@ -105,7 +105,13 @@ export default function Home() {
       </div>
 
       {/* ── Level 01: Floating Glass Navigation ── */}
-      <AntigravityNav onOpenContact={handleOpenContact} />
+      <AntigravityNav
+        onOpenContact={handleOpenContact}
+        colorMode={colorMode}
+        onColorModeChange={handleColorModeChange}
+        audioEnabled={audioEnabled}
+        onToggleAudio={handleToggleAudio}
+      />
 
       {/* ── Level 01.5: Spatial Kinetic Flight Rail & Velocity Tape ── */}
       <SpatialKineticRail
@@ -173,7 +179,7 @@ export default function Home() {
       {/* ── Level 02: Fluid Scrollable Content Stream (User-Driven Web UX) ── */}
       <main className="relative z-10 w-full overflow-x-hidden">
         {/* ── 01: HERO SECTION ── */}
-        <section id="top" className="min-h-screen flex flex-col justify-center items-start px-6 sm:px-12 lg:px-20 xl:px-24 pt-28 pb-16">
+        <section id="top" className="min-h-screen flex flex-col justify-center items-start px-4 sm:px-12 lg:px-20 xl:px-24 pt-28 pb-16">
           <div className="w-full max-w-xl lg:max-w-2xl">
             <HeroVoid
               onOpenContact={handleOpenContact}
@@ -191,48 +197,48 @@ export default function Home() {
         </section>
 
         {/* ── 02: THE SPATIAL GAP CHECKPOINT ── */}
-        <section id="gap" className="min-h-screen flex items-center justify-start px-6 sm:px-12 lg:px-20 xl:px-24 py-20">
+        <section id="gap" className="min-h-screen flex items-center justify-start px-4 sm:px-12 lg:px-20 xl:px-24 py-16 sm:py-20">
           <TheGapWorkbench />
         </section>
 
         {/* ── 03: THE CONTINUOUS PIPELINE ── */}
-        <section id="pipeline" className="min-h-screen flex items-center justify-start px-6 sm:px-12 lg:px-20 xl:px-24 py-20">
+        <section id="pipeline" className="min-h-screen flex items-center justify-start px-4 sm:px-12 lg:px-20 xl:px-24 py-16 sm:py-20">
           <PipelineFlow />
         </section>
 
         {/* ── 04: DUAL VALUE STREAMS & PHYSICAL AI ── */}
-        <section id="streams" className="min-h-screen flex items-center justify-start px-6 sm:px-12 lg:px-20 xl:px-24 py-20">
+        <section id="streams" className="min-h-screen flex items-center justify-start px-4 sm:px-12 lg:px-20 xl:px-24 py-16 sm:py-20">
           <PhysicalAiLayers />
         </section>
 
         {/* ── 05: SECTOR 17 CHANDIGARH PROVING GROUND ── */}
-        <section id="proving" className="min-h-screen flex items-center justify-start px-6 sm:px-12 lg:px-20 xl:px-24 py-20">
+        <section id="proving" className="min-h-screen flex items-center justify-start px-4 sm:px-12 lg:px-20 xl:px-24 py-16 sm:py-20">
           <SectorPilotMatrix />
         </section>
 
         {/* ── 06: CAPITAL ALLOCATION MATRIX ── */}
-        <section id="capital" className="min-h-screen flex items-center justify-start px-6 sm:px-12 lg:px-20 xl:px-24 py-20">
+        <section id="capital" className="min-h-screen flex items-center justify-start px-4 sm:px-12 lg:px-20 xl:px-24 py-16 sm:py-20">
           <CapitalAllocation onOpenContact={handleOpenContact} />
         </section>
 
         {/* ── 07: FOUNDER VISION & CLIMAX ── */}
-        <section id="founder" className="min-h-screen flex items-center justify-start px-6 sm:px-12 lg:px-20 xl:px-24 py-20">
+        <section id="founder" className="min-h-screen flex items-center justify-start px-4 sm:px-12 lg:px-20 xl:px-24 py-16 sm:py-20">
           <FounderClimax onOpenContact={handleOpenContact} />
         </section>
 
         {/* ── 08: SATELLITE MACRO OVERLOOK · EARTHOS LAB FOOTER ── */}
         <footer id="earthos-footer" className="min-h-[240vh] relative pointer-events-none">
-          {/* Sticky 100% Screen Cinematic Viewport */}
-          <div className="sticky top-0 h-screen w-full flex flex-col justify-between px-6 sm:px-12 lg:px-20 py-8 pointer-events-none z-10">
+          {/* Sticky Cinematic Viewport */}
+          <div className="sticky top-0 h-screen max-md:h-auto max-md:min-h-screen w-full flex flex-col justify-between px-4 sm:px-12 lg:px-20 py-4 sm:py-8 pointer-events-none z-10 max-md:pointer-events-auto max-md:overflow-y-auto">
             {/* Top Satellite Orbital Status Header */}
-            <div className="w-full max-w-5xl mx-auto flex items-center justify-between border border-white/12 bg-black/75 backdrop-blur-xl px-5 py-3 rounded-2xl pointer-events-auto shadow-[0_12px_40px_rgba(0,0,0,0.8)]">
-              <div className="flex items-center gap-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-                <span className="font-mono text-[0.72rem] text-cyan-300 font-bold tracking-[0.25em] uppercase">
+            <div className="w-full max-w-5xl mx-auto flex items-center justify-between border border-white/12 bg-black/75 backdrop-blur-xl px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl pointer-events-auto shadow-[0_12px_40px_rgba(0,0,0,0.8)]">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
+                <span className="font-mono text-[0.64rem] sm:text-[0.72rem] text-cyan-300 font-bold tracking-[0.14em] sm:tracking-[0.25em] uppercase truncate">
                   ORBITAL SATELLITE OVERLOOK · ALTITUDE: 220M
                 </span>
               </div>
-              <div className="font-mono text-[0.68rem] text-muted hidden sm:flex items-center gap-4">
+              <div className="font-mono text-[0.68rem] text-muted hidden sm:flex items-center gap-4 shrink-0">
                 <span>000° NORTH</span>
                 <span>·</span>
                 <span className="text-cyan-400 font-bold">NETWORK: EARTHOSLAB CIRCUIT [100% RESOLVED]</span>
@@ -240,21 +246,21 @@ export default function Home() {
             </div>
 
             {/* Center: 100% Unobstructed Window for the Glowing "earthoslab" Highway Circuit */}
-            <div className="flex-1 pointer-events-none" />
+            <div className="flex-1 pointer-events-none min-h-[40px] max-md:hidden" />
 
             {/* Bottom Terminal Command Dock */}
-            <div className="w-full max-w-5xl mx-auto space-y-4 pointer-events-auto">
+            <div className="w-full max-w-5xl mx-auto space-y-4 pointer-events-auto py-3 md:py-0">
               {/* Main Footer Console Grid */}
-              <div className="void-glass p-6 sm:p-8 rounded-2xl border border-white/12 bg-black/85 backdrop-blur-xl grid grid-cols-1 md:grid-cols-4 gap-6 shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
-                <div className="space-y-2 md:col-span-2">
+              <div className="void-glass p-5 sm:p-8 rounded-2xl border border-white/12 bg-black/85 backdrop-blur-xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 md:gap-6 shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+                <div className="space-y-2 sm:col-span-2 md:col-span-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
-                    <span className="font-serif text-[1.4rem] font-medium text-white tracking-tight">EarthOS Lab</span>
+                    <span className="font-serif text-[1.3rem] sm:text-[1.4rem] font-medium text-white tracking-tight">EarthOS Lab</span>
                   </div>
-                  <p className="text-muted text-[0.80rem] leading-relaxed max-w-md">
+                  <p className="text-muted text-[0.78rem] sm:text-[0.80rem] leading-relaxed max-w-md">
                     Building open, sub-5cm spatial neural digital twin infrastructure. Reconstructing physical reality for autonomous robotics and spatial computing.
                   </p>
-                  <div className="pt-1 font-mono text-[0.68rem] text-cyan-400/80">
+                  <div className="pt-1 font-mono text-[0.66rem] sm:text-[0.68rem] text-cyan-400/80">
                     Sector 17 Proving Ground · Chandigarh, India
                   </div>
                 </div>
@@ -300,7 +306,7 @@ export default function Home() {
               </div>
 
               {/* Bottom Credits Bar */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 font-mono text-[0.68rem] text-muted">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 font-mono text-[0.66rem] sm:text-[0.68rem] text-muted text-center sm:text-left">
                 <div>© 2026 EarthOS Lab · WorldRing Spatial Platform. All rights reserved.</div>
                 <div className="flex items-center gap-4 text-white/50">
                   <span>Autonomous Visual Intelligence</span>

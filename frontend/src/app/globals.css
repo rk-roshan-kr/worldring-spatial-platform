@@ -43,6 +43,7 @@
 html {
   background-color: var(--void-black);
   color: var(--ink-primary);
+  overflow-x: hidden;
 }
 
 html.lenis,
@@ -66,6 +67,7 @@ body {
   font-family: var(--font-sans);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
 
